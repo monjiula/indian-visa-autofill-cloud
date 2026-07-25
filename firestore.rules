@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is an admin
+    function isAdmin() {
+      return get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Collection Group query rule for Admins
+    match /{path=**}/profiles/{profileId} {
+      allow read: if request.auth != null && isAdmin();
+    }
+
+    // Rules for User Profiles (Sensitive Data)
+    match /users/{userId}/profiles/{profileId} {
+      // Users can only read/write their OWN profiles
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Only the specific user can write/delete their own profiles
+      allow write: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && (request.auth.uid == userId || isAdmin());
+    }
+    
+    // Rules for Roles Collection
+    match /roles/{userId} {
+      // Anyone logged in can read their own role (so the extension knows if they are an admin)
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Nobody can write to roles from the app (must be done manually in Firebase Console for security)
+      allow write: if false;
+    }
+  }
+}

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>IV Autofill Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            width: 350px; font-family: 'Inter', 'Segoe UI', sans-serif; 
+            background: linear-gradient(160deg, #0f0c29 0%, #1a1a3e 40%, #24243e 100%);
+            color: #e0e0e0; padding: 0;
+        }
+
+        /* UTILS */
+        .hidden { display: none !important; }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+        /* MAIN WRAPPER */
+        .app-wrapper { padding: 14px; }
+
+        /* HEADER */
+        .app-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 16px; 
+            background: linear-gradient(135deg, rgba(99,102,241,0.4), rgba(168,85,247,0.35));
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            backdrop-filter: blur(20px);
+        }
+        .app-title { 
+            font-size: 14px; font-weight: 800; letter-spacing: -0.2px;
+            background: linear-gradient(135deg, #c7d2fe, #a78bfa, #f0abfc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .app-version {
+            font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.35);
+            background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 6px;
+            margin-left: 6px; letter-spacing: 0.5px;
+        }
+        .header-actions { display: flex; align-items: center; gap: 6px; }
+        .icon-btn { 
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 8px; border: none;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+        }
+        .fb-btn { 
+            background: rgba(24,119,242,0.25); color: #7db4fc;
+            border: 1px solid rgba(24,119,242,0.2);
+        }
+        .fb-btn:hover { background: rgba(24,119,242,0.4); transform: scale(1.08); }
+        .settings-btn {
+            background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6);
+            width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer; font-size: 14px; transition: all 0.2s;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .settings-btn:hover { background: rgba(255,255,255,0.12); color: #fff; transform: scale(1.08); }
+
+        /* FREE BANNER */
+        .free-banner {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(16,185,129,0.15));
+            border: 1px solid rgba(34,197,94,0.2); border-radius: 10px;
+            padding: 8px; margin-bottom: 14px; font-size: 11px; font-weight: 700;
+            color: #86efac; letter-spacing: 0.3px;
+            animation: glow 3s ease-in-out infinite;
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 8px rgba(34,197,94,0.1); }
+            50% { box-shadow: 0 0 16px rgba(34,197,94,0.2); }
+        }
+
+        /* GLASS CARD */
+        .card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px; padding: 14px; margin-bottom: 12px;
+            backdrop-filter: blur(10px);
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: rgba(255,255,255,0.12); }
+        .card-label {
+            font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5);
+            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .card-label .step {
+            background: linear-gradient(135deg, #6366f1, #a78bfa);
+            color: white; width: 18px; height: 18px; border-radius: 6px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 800;
+        }
+
+        /* TOGGLE */
+        .toggle-container {
+            display: flex; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px; padding: 3px; margin-bottom: 14px; position: relative;
+        }
+        .toggle-btn {
+            flex: 1; text-align: center; padding: 9px; cursor: pointer;
+            font-size: 11px; font-weight: 700; z-index: 2;
+            border: none; background: transparent; color: rgba(255,255,255,0.4);
+            transition: color 0.3s; letter-spacing: 0.3px;
+        }
+        .toggle-btn.active { color: #fff; }
+        .toggle-btn:hover:not(.active) { color: rgba(255,255,255,0.6); }
+        #toggle-slider {
+            position: absolute; top: 3px; left: 3px;
+            width: calc(50% - 3px); height: calc(100% - 6px);
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 10px; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 1; box-shadow: 0 2px 8px rgba(99,102,241,0.35);
+        }
+
+        /* FILE INPUT */
+        input[type="file"] {
+            width: 100%; padding: 8px; margin-top: 6px;
+            background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.15);
+            border-radius: 8px; color: #aaa; font-size: 11px; cursor: pointer;
+        }
+        input[type="file"]:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.06); }
+
+        .progress-bar {
+            width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 8px;
+            overflow: hidden; display: none;
+        }
+        .progress-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #6366f1, #10b981); width: 0%; transition: width 0.3s;
+        }
+
+        /* BUTTONS */
+        .btn {
+            width: 100%; padding: 10px; border: none; border-radius: 10px;
+            font-weight: 700; cursor: pointer; color: white; font-size: 12px;
+            letter-spacing: 0.3px; transition: all 0.25s; position: relative;
+            overflow: hidden;
+        }
+        .btn::after {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+            transition: 0.5s;
+        }
+        .btn:hover::after { left: 100%; }
+        .btn-extract {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            box-shadow: 0 3px 12px rgba(99,102,241,0.3);
+        }
+        .btn-extract:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(99,102,241,0.4); }
+        .btn-extract:active { transform: translateY(0); }
+        .btn-passport {
+            background: linear-gradient(135deg, #059669, #10b981);
+            box-shadow: 0 3px 12px rgba(16,185,129,0.3);
+        }
+        .btn-passport:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(16,185,129,0.4); }
+        .btn-autofill {
+            background: linear-gradient(135deg, #059669, #34d399);
+            box-shadow: 0 3px 12px rgba(52,211,153,0.3);
+            margin-top: 12px; font-size: 13px; padding: 11px;
+        }
+        .btn-autofill:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(52,211,153,0.4); }
+        .btn-doc {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 3px 12px rgba(245,158,11,0.3);
+            font-size: 11px; padding: 8px;
+        }
+        .btn-doc:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(245,158,11,0.4); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+        /* PROFILE LIST */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .section-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.65); }
+        .hidden-link { 
+            font-size: 10px; color: #a78bfa; cursor: pointer;
+            text-decoration: none; font-weight: 600;
+            padding: 3px 8px; border-radius: 6px;
+            background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.15);
+            transition: all 0.2s;
+        }
+        .hidden-link:hover { background: rgba(167,139,250,0.2); }
+        .export-btn, .import-btn {
+            font-size: 10px; color: #10b981; cursor: pointer; text-decoration: none; font-weight: 600;
+            padding: 3px 8px; border-radius: 6px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.15);
+            transition: all 0.2s; margin-left: 5px;
+        }
+        .export-btn:hover, .import-btn:hover { background: rgba(16,185,129,0.2); }
+
+        #profileList, #hiddenProfileList {
+            border: 1px solid rgba(255,255,255,0.06); border-radius: 10px;
+            max-height: 180px; overflow-y: auto;
+            background: rgba(0,0,0,0.15);
+        }
+        .profile-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 9px 12px; cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 12px; font-weight: 500; color: #c4b5fd;
+            transition: all 0.2s;
+        }
+        .profile-item:last-child { border-bottom: none; }
+        .profile-item:hover { background: rgba(255,255,255,0.04); }
+        .profile-item.selected { 
+            background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1));
+            border-left: 3px solid #8b5cf6;
+        }
+        .profile-actions { display: flex; gap: 3px; align-items: center; }
+        .profile-actions button, .profile-actions a {
+            padding: 3px 7px; font-size: 9px; border: none; border-radius: 5px;
+            color: white; cursor: pointer; font-weight: 600; transition: all 0.2s;
+            letter-spacing: 0.3px; text-decoration: none; display: inline-block;
+        }
+        .profile-actions button:hover, .profile-actions a:hover { transform: scale(1.05); }
+        .edit-btn { background: rgba(34,197,94,0.3); border: 1px solid rgba(34,197,94,0.3) !important; }
+        .rename-btn { background: rgba(99,102,241,0.3); border: 1px solid rgba(99,102,241,0.3) !important; }
+        .hide-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1) !important; }
+        .del-btn { background: rgba(239,68,68,0.25); border: 1px solid rgba(239,68,68,0.2) !important; }
+        .show-btn { background: rgba(234,179,8,0.3); border: 1px solid rgba(234,179,8,0.3) !important; color: #fde68a !important; }
+        .export-btn { background: rgba(16,185,129,0.3); border: 1px solid rgba(16,185,129,0.3) !important; }
+
+        /* STATUS */
+        #statusMessage {
+            text-align: center; font-size: 11px; font-weight: 600;
+            margin-top: 10px; min-height: 18px; padding: 0 8px;
+            transition: all 0.3s;
+        }
+        .error { color: #fca5a5; } .success { color: #86efac; } .processing { color: #93c5fd; }
+
+        /* SIDE PANEL BTN */
+        #openSidePanelBtn {
+            width: 100%; margin-top: 8px; padding: 7px;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px; color: rgba(255,255,255,0.4);
+            font-size: 10px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; letter-spacing: 0.3px;
+        }
+        #openSidePanelBtn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+
+        /* SETTINGS PANEL */
+        .settings-panel {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px; padding: 14px; margin-bottom: 14px;
+            backdrop-filter: blur(10px);
+            animation: slideDown 0.25s ease;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .settings-panel h4 {
+            margin: 0 0 10px 0; font-size: 12px; font-weight: 700;
+            color: rgba(255,255,255,0.7);
+        }
+        .api-key-row { display: flex; gap: 6px; align-items: center; }
+        .api-key-input {
+            flex: 1; padding: 8px 10px; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; color: #c7d2fe; outline: none; transition: all 0.2s;
+        }
+        .api-key-input::placeholder { color: rgba(255,255,255,0.2); }
+        .api-key-input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.15); }
+        .save-key-btn {
+            padding: 8px 14px; font-size: 11px; font-weight: 700; cursor: pointer;
+            background: linear-gradient(135deg, #059669, #10b981);
+            border: none; border-radius: 8px; color: white;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .save-key-btn:hover { transform: scale(1.03); box-shadow: 0 3px 10px rgba(16,185,129,0.3); }
+        .api-key-help { margin-top: 10px; font-size: 10px; color: rgba(255,255,255,0.35); line-height: 1.5; }
+        .api-key-help a { color: #a78bfa; text-decoration: none; font-weight: 600; cursor: pointer; }
+        .api-key-help a:hover { color: #c4b5fd; text-decoration: underline; }
+        .key-status { font-size: 11px; font-weight: 600; margin-top: 6px; }
+        .key-status.valid { color: #86efac; }
+        .key-status.invalid { color: #fca5a5; }
+        .key-status.checking { color: #93c5fd; }
+
+        /* HIDDEN VIEW */
+        .back-btn {
+            background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.1); padding: 5px 10px;
+            border-radius: 6px; font-size: 10px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.15); color: white; }
+
+        .footer {
+            text-align: center; font-size: 9px; color: rgba(255,255,255,0.15);
+            padding: 6px 0 2px; letter-spacing: 0.5px;
+        }
+
+        /* LIGHT MODE OVERRIDES */
+        body.light-mode {
+            background: linear-gradient(160deg, #f8fafc 0%, #e2e8f0 40%, #cbd5e1 100%);
+            color: #0f172a;
+        }
+        body.light-mode * {
+            text-shadow: none !important;
+        }
+        body.light-mode .app-header {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(241,245,249,0.95));
+            border-bottom: 1px solid rgba(0,0,0,0.15);
+        }
+        body.light-mode .app-title {
+            background: linear-gradient(135deg, #312e81, #4c1d95, #701a75);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        body.light-mode .app-version {
+            color: #334155; background: rgba(0,0,0,0.1);
+        }
+        body.light-mode .settings-btn, body.light-mode .icon-btn {
+            background: rgba(0,0,0,0.08); color: #1e293b; border-color: rgba(0,0,0,0.15);
+        }
+        body.light-mode .settings-btn:hover, body.light-mode .icon-btn:hover {
+            background: rgba(0,0,0,0.15); color: #000;
+        }
+        body.light-mode .card, body.light-mode .settings-panel {
+            background: rgba(255,255,255,0.9);
+            border-color: rgba(0,0,0,0.15);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            color: #0f172a;
+        }
+        body.light-mode .card-label, body.light-mode .section-label, body.light-mode .settings-panel h4 {
+            color: #000 !important; font-weight: 800;
+        }
+        body.light-mode label {
+            color: #000 !important; font-weight: 700;
+        }
+        body.light-mode .edit-btn { background: #22c55e !important; color: white !important; }
+        body.light-mode .rename-btn { background: #6366f1 !important; color: white !important; }
+        body.light-mode .hide-btn { background: #94a3b8 !important; color: white !important; }
+        body.light-mode .del-btn { background: #ef4444 !important; color: white !important; }
+        body.light-mode .export-btn { background: #10b981 !important; color: white !important; }
+        body.light-mode .show-btn { background: #eab308 !important; color: white !important; }
+        body.light-mode .toggle-container {
+            background: rgba(0,0,0,0.1); border-color: rgba(0,0,0,0.15);
+        }
+        body.light-mode .toggle-btn { color: #334155; font-weight: 700; }
+        body.light-mode .toggle-btn.active { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important; }
+        body.light-mode .profile-item {
+            color: #000; border-color: rgba(0,0,0,0.15); font-weight: 700;
+        }
+        body.light-mode .profile-item span {
+            color: #000 !important;
+        }
+        body.light-mode .profile-item:hover { background: rgba(0,0,0,0.05); }
+        body.light-mode .profile-item.selected {
+            background: linear-gradient(135deg, rgba(79,70,229,0.15), rgba(124,58,237,0.15));
+            border-color: #4f46e5;
+        }
+        body.light-mode #profileList, body.light-mode #hiddenProfileList {
+            background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.15);
+        }
+        body.light-mode input[type="file"], body.light-mode select, body.light-mode textarea, body.light-mode input[type="text"], body.light-mode input[type="password"] {
+            background: #fff; border-color: rgba(0,0,0,0.3); color: #000;
+        }
+        body.light-mode .api-key-input {
+            background: #fff; color: #000; border-color: rgba(0,0,0,0.3);
+        }
+        body.light-mode .api-key-help { color: #334155; }
+        body.light-mode #openSidePanelBtn, body.light-mode .back-btn {
+            background: rgba(255,255,255,0.9); color: #0f172a; border-color: rgba(0,0,0,0.2);
+            font-weight: 700;
+        }
+        body.light-mode #openSidePanelBtn:hover, body.light-mode .back-btn:hover {
+            background: #fff; color: #000; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        body.light-mode .footer { color: #475569; font-weight: 600; }
+        body.light-mode .key-status { color: #0f172a; font-weight: 600; }
+    </style>
+    <script src="lib/firebase-app-compat.js"></script>
+    <script src="lib/firebase-auth-compat.js"></script>
+    <script src="lib/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="build/pdf.mjs" type="module"></script>
+    <script src="gemini.js" type="module"></script>
+    <script src="popup.js" type="module"></script>
+</head>
+<body>
+    <!-- AUTH VIEW -->
+    <div id="auth-view" style="padding:20px; text-align:center; margin-top:20px;">
+        <h2 style="margin-bottom:5px;">Welcome to Cloud</h2>
+        <p style="font-size:11px; color:#9ca3af; margin-bottom:20px;">Log in to sync your profiles</p>
+        
+        <input type="email" id="authEmail" placeholder="Email" style="width:100%; padding:10px; margin-bottom:10px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-size:12px;">
+        <input type="password" id="authPassword" placeholder="Password" style="width:100%; padding:10px; margin-bottom:15px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-size:12px;">
+        
+        <div id="authError" style="color:#ef4444; font-size:11px; margin-bottom:10px; display:none;"></div>
+        
+        <button id="loginBtn" style="width:100%; padding:10px; background:#4f46e5; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom:10px;">Login</button>
+        <button id="signupBtn" style="width:100%; padding:10px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom:10px;">Create Account</button>
+        
+        <div style="text-align:center; margin-top:10px;">
+            <a href="#" id="forgotBtn" style="color:#60a5fa; font-size:12px; text-decoration:none;">Forgot Password?</a>
+        </div>
+    </div>
+
+    <!-- MAIN APP VIEW (Hidden by default) -->
+    <div id="app-view" style="display:none;">
+        <!-- HEADER -->
+        <div class="app-header">
+            <div style="display:flex;align-items:center;">
+                <span class="app-title">Indian Visa Autofill Cloud</span>
+                <span class="app-version">v2.1</span>
+            </div>
+            <div class="header-actions">
+                <a id="followBtn" href="https://www.facebook.com/monjiulahsan" target="_blank" class="icon-btn fb-btn" title="Follow on Facebook">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
+                <button id="themeToggleBtn" class="settings-btn" title="Toggle Light/Dark Mode" style="font-size:12px;">🌓</button>
+                <button id="adminBtn" class="icon-btn" title="Admin Dashboard" style="display:none;">👑</button>
+                <button id="logoutBtn" class="icon-btn" title="Logout">🚪</button>
+                <button id="settingsToggleBtn" class="settings-btn" title="Settings">⚙</button>
+            </div>
+        </div>
+
+        <div class="app-wrapper">
+            <!-- SETTINGS PANEL -->
+            <div id="settingsPanel" class="settings-panel hidden">
+                <h4>🔑 Gemini API Key (Free)</h4>
+                <div class="api-key-row">
+                    <input type="password" id="apiKeyInput" class="api-key-input" placeholder="Paste your API key...">
+                    <button id="saveKeyBtn" class="save-key-btn">Save</button>
+                </div>
+                <div id="keyStatus" class="key-status"></div>
+                <div class="api-key-help" style="margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+                    Get your <b>FREE</b> key → <a id="getKeyLink">aistudio.google.com/apikey</a>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <label style="font-size:11px;">AI Model:</label>
+                    <select id="modelSelect" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:4px; font-size:10px;">
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash (Fast)</option>
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (Smart)</option>
+                    </select>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <label style="font-size:11px;">Auto-delete Profiles:</label>
+                    <select id="autoDeleteSelect" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:4px; font-size:10px;">
+                        <option value="0">Never</option>
+                        <option value="7">After 7 Days</option>
+                        <option value="30">After 30 Days</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom:10px; display:flex; align-items:center;">
+                    <input type="checkbox" id="fillMissingOnly" style="margin-right:6px;">
+                    <label for="fillMissingOnly" style="font-size:11px; cursor:pointer;">Fill Missing Fields Only</label>
+                </div>
+
+                <div style="margin-bottom:10px;">
+                    <details>
+                        <summary style="font-size:11px; cursor:pointer; color:#a78bfa;">Edit AI Prompts</summary>
+                        <div style="margin-top:8px;">
+                            <label style="font-size:10px;">BGD PDF Prompt:</label>
+                            <textarea id="promptBGD" style="width:100%; height:60px; font-size:9px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:4px;"></textarea>
+                            
+                            <label style="font-size:10px; margin-top:5px; display:block;">Passport Prompt:</label>
+                            <textarea id="promptPassport" style="width:100%; height:60px; font-size:9px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:4px;"></textarea>
+                        </div>
+                    </details>
+                </div>
+
+                <button id="clearDataBtn" style="width:100%; padding:6px; background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; font-size:11px; cursor:pointer; margin-bottom:10px;">
+                    🗑 Clear All Data
+                </button>
+            </div>
+
+            <!-- FREE BANNER -->
+            <div class="free-banner">
+                <span>⚡</span> 100% FREE — Powered by Gemini AI <span>⚡</span>
+            </div>
+
+            <div id="main-content">
+                <!-- MODE TOGGLE -->
+                <div class="toggle-container">
+                    <div id="toggle-slider"></div>
+                    <button class="toggle-btn active" id="btn-pdf-mode">📄 BGD PDF</button>
+                    <button class="toggle-btn" id="btn-passport-mode">🛂 PASSPORT</button>
+                </div>
+
+                <!-- PDF UPLOAD -->
+                <div id="pdf-upload-section" class="card">
+                    <div class="card-label"><span class="step">1</span> Upload Application PDF(s)</div>
+                    <input type="file" id="pdfUpload" accept=".pdf" multiple>
+                    <div id="pdfProgress" class="progress-bar"><div class="progress-bar-fill" id="pdfProgressFill"></div></div>
+                    <button id="saveProfileButton" class="btn btn-extract" style="margin-top:10px;">
+                        ✨ Extract Data
+                    </button>
+                </div>
+
+                <!-- PASSPORT UPLOAD -->
+                <div id="passport-upload-section" class="card hidden">
+                    <div class="card-label"><span class="step">1</span> Upload Passport Image/PDF(s)</div>
+                    <input type="file" id="passportUpload" accept="image/*,.pdf" multiple>
+                    <div id="passportProgress" class="progress-bar"><div class="progress-bar-fill" id="passportProgressFill"></div></div>
+                    <button id="saveProfileButtonPassport" class="btn btn-passport" style="margin-top:10px;">
+                        🔍 Extract Data
+                    </button>
+                </div>
+
+                <!-- PROFILE LIST -->
+                <div class="card">
+                    <div class="section-header">
+                        <div class="card-label" style="margin-bottom:0;"><span class="step">2</span> Select Profile</div>
+                        <div>
+                            <span id="importBtn" class="import-btn">⬆ Import</span>
+                            <span id="viewHiddenBtn" class="hidden-link">Hidden</span>
+                        </div>
+                    </div>
+                    <input type="file" id="importInput" accept=".json" style="display:none;">
+                    <div id="profileList"></div>
+                    <button id="autofillButton" class="btn btn-autofill">
+                        🚀 AUTOFILL FORM
+                    </button>
+                </div>
+
+                <!-- DOCUMENTS SECTION -->
+                <div class="card">
+                    <div class="card-label" style="margin-bottom:10px;"><span class="step">3</span> Generate Documents</div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <button id="popup-doc-cover" class="btn btn-doc">Cover Letter</button>
+                        <button id="popup-doc-noc" class="btn btn-doc">NOC</button>
+                        <button id="popup-doc-undertaking" class="btn btn-doc">Undertaking</button>
+                        <button id="popup-doc-photo" class="btn btn-doc">Photo Form</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HIDDEN VIEW -->
+            <div id="hidden-view" class="hidden">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div class="card-label" style="margin-bottom:0;">Hidden Profiles</div>
+                        <button id="backToMainBtn" class="back-btn">← Back</button>
+                    </div>
+                    <div id="hiddenProfileList"></div>
+                </div>
+            </div>
+
+            <div id="statusMessage"></div>
+            <button id="openSidePanelBtn" title="Open Side Panel">◳ Open Side Panel</button>
+            <div class="footer">Indian Visa Autofill Pro © 2026</div>
+        </div>
+    </div>
+
+    <input type="file" id="fileInputID" style="display:none;">
+    <script src="popup.js" type="module"></script>
+</body>
+</html>

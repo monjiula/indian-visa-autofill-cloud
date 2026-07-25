@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Profile | Indian Visa Autofill Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            background: linear-gradient(160deg, #0f0c29 0%, #1a1a3e 40%, #24243e 100%);
+            color: #e0e0e0;
+            padding: 30px;
+            min-height: 100vh;
+        }
+        
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 30px; 
+            border-radius: 16px; 
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .header-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 { margin: 0; font-size: 24px; font-weight: 700; color: #fff; }
+        .profile-name { color: #8b5cf6; }
+        
+        .type-badge {
+            font-size: 11px; font-weight: 700; color: #fff;
+            background: linear-gradient(135deg, #6366f1, #a78bfa);
+            padding: 4px 10px; border-radius: 6px;
+            margin-left: 12px; vertical-align: middle;
+        }
+
+        h2 { 
+            margin: 30px 0 15px; 
+            font-size: 16px; 
+            color: #a78bfa; 
+            border-bottom: 1px dashed rgba(255,255,255,0.1); 
+            padding-bottom: 8px; 
+        }
+
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 20px; 
+        }
+
+        .form-group { display: flex; flex-direction: column; position: relative; }
+        .form-group label { 
+            font-weight: 600; font-size: 11px; margin-bottom: 6px; 
+            color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        
+        .form-group input { 
+            padding: 10px 12px; 
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 8px; 
+            color: #fff;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: #8b5cf6;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(139,92,246,0.2);
+        }
+
+        /* Validation status dots */
+        .status-dot {
+            position: absolute;
+            right: 12px;
+            top: 36px;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+        }
+        .valid { background: #10b981; box-shadow: 0 0 5px #10b981; }
+        .empty { background: #f59e0b; box-shadow: 0 0 5px #f59e0b; }
+
+        .button-bar { 
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .btn { 
+            padding: 10px 20px; font-weight: 700; border: none; 
+            cursor: pointer; border-radius: 8px; font-size: 13px;
+            transition: all 0.2s;
+        }
+        .btn-save { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .btn-save:hover { box-shadow: 0 4px 15px rgba(16,185,129,0.4); transform: translateY(-1px); }
+        .btn-copy { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.15); }
+        .btn-copy:hover { background: rgba(255,255,255,0.15); }
+
+        #statusText { font-size: 13px; font-weight: 600; }
+        .status-success { color: #10b981; }
+        .status-saving { color: #60a5fa; }
+        
+        .footer-bar { margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: flex-end; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-area">
+            <div>
+                <h1>Edit Profile: <span id="profileName" class="profile-name"></span> <span id="typeBadge" class="type-badge"></span></h1>
+            </div>
+            <div class="button-bar">
+                <span id="statusTextTop" class="status-success"></span>
+                <button id="copyButton" class="btn btn-copy">📋 Copy Profile</button>
+                <button id="saveButtonTop" class="btn btn-save">💾 Save Changes</button>
+            </div>
+        </div>
+
+        <h2>Personal Details</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>Surname</label><input type="text" id="surname"></div>
+            <div class="form-group"><label>Given Name</label><input type="text" id="givenName"></div>
+            <div class="form-group"><label>Gender (M/F)</label><input type="text" id="gender"></div>
+            <div class="form-group"><label>Date of Birth (dd/mm/yyyy)</label><input type="text" id="dob"></div>
+            <div class="form-group"><label>Place of Birth (Town/City)</label><input type="text" id="pobTown"></div>
+            <div class="form-group"><label>Place of Birth (Country)</label><input type="text" id="pobCountry"></div>
+            <div class="form-group"><label>Citizenship / National ID No</label><input type="text" id="citizenId"></div>
+            <div class="form-group"><label>Religion</label><input type="text" id="religion"></div>
+            <div class="form-group"><label>Visible Identification Marks</label><input type="text" id="identity_marks"></div>
+            <div class="form-group"><label>Educational Qualification</label><input type="text" id="education"></div>
+            <div class="form-group"><label>Nationality</label><input type="text" id="nationality"></div>
+            <div class="form-group" style="grid-column: span 3;">
+                <label>Applicant Photo (For Printed Documents)</label>
+                <input type="file" id="photoInput" accept="image/jpeg, image/png, image/jpg" style="padding: 5px;">
+                <img id="photoPreview" src="" style="display:none; max-height: 100px; margin-top:10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">
+                <input type="hidden" id="photoBase64">
+            </div>
+        </div>
+
+        <h2>Applicant Photo (For Forms & Documents)</h2>
+        <div class="form-grid" style="display: block;">
+            <div class="form-group" style="margin-bottom:10px;">
+                <label>Upload Passport Photo (JPEG/PNG)</label>
+                <input type="file" id="photoInput" accept="image/png, image/jpeg" style="border:none; padding:10px 0;">
+                <input type="hidden" id="photoBase64">
+            </div>
+            <img id="photoPreview" style="display:none; max-width: 150px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.2); margin-top: 10px;">
+        </div>
+
+        <h2>Passport Details</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>Passport No.</label><input type="text" id="passNo"></div>
+            <div class="form-group"><label>Place of Issue</label><input type="text" id="passPlace"></div>
+            <div class="form-group"><label>Issue Date (dd/mm/yyyy)</label><input type="text" id="passDate"></div>
+            <div class="form-group"><label>Expiry Date (dd/mm/yyyy)</label><input type="text" id="passExpire"></div>
+        </div>
+        
+        <h2>Contact Details (Present)</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>Address 1</label><input type="text" id="pres_add1"></div>
+            <div class="form-group"><label>Address 2</label><input type="text" id="pres_add2"></div>
+            <div class="form-group"><label>City/Town</label><input type="text" id="pres_add3"></div>
+            <div class="form-group"><label>Country</label><input type="text" id="pres_country"></div>
+            <div class="form-group"><label>Pincode</label><input type="text" id="pincode"></div>
+            <div class="form-group"><label>Phone No</label><input type="text" id="pres_phone"></div>
+            <div class="form-group"><label>ISD Code</label><input type="text" id="isd_code1"></div>
+            <div class="form-group"><label>Mobile No</label><input type="text" id="mobile"></div>
+            <div class="form-group"><label>Email Address</label><input type="text" id="email_id"></div>
+        </div>
+
+        <h2>Contact Details (Permanent)</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>Address 1</label><input type="text" id="perm_address1"></div>
+            <div class="form-group"><label>Address 2</label><input type="text" id="perm_address2"></div>
+            <div class="form-group"><label>City/Town</label><input type="text" id="perm_address3"></div>
+        </div>
+
+        <h2>Family Details</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>Father's Name</label><input type="text" id="fthrname"></div>
+            <div class="form-group"><label>Father's Nationality</label><input type="text" id="father_nationality"></div>
+            <div class="form-group"><label>Father's Place of Birth</label><input type="text" id="father_place_of_birth"></div>
+            <div class="form-group"><label>Mother's Name</label><input type="text" id="mother_name"></div>
+            <div class="form-group"><label>Mother's Place of Birth</label><input type="text" id="mother_place_of_birth"></div>
+            <div class="form-group"><label>Marital Status (0=Married, 1=Single)</label><input type="text" id="marital_status"></div>
+            <div class="form-group"><label>Spouse's Name</label><input type="text" id="spouse_name"></div>
+            <div class="form-group"><label>Spouse's Place of Birth</label><input type="text" id="spouse_place_of_birth"></div>
+        </div>
+
+        <h2>Profession Details</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>Present Occupation</label><input type="text" id="occupation"></div>
+            <div class="form-group"><label>Employer Name/Business</label><input type="text" id="empname"></div>
+            <div class="form-group"><label>Designation</label><input type="text" id="empdesignation"></div>
+            <div class="form-group"><label>Employer Address</label><input type="text" id="empaddress"></div>
+        </div>
+        
+        <h2>Visa Details (Medical)</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>Hospital Name</label><input type="text" id="hsptNameMsn"></div>
+            <div class="form-group"><label>Hospital Address</label><input type="text" id="hsptAddMsn"></div>
+            <div class="form-group"><label>Doctor Name</label><input type="text" id="docNameMsn"></div>
+            <div class="form-group"><label>Hospital Phone</label><input type="text" id="phMsn"></div>
+            <div class="form-group"><label>Hospital Email</label><input type="text" id="emailMsn"></div>
+            <div class="form-group"><label>Illness</label><input type="text" id="illness"></div>
+        </div>
+
+        <h2>Visa Details (General)</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>Visa Duration (Months)</label><input type="text" id="duration"></div>
+            <div class="form-group"><label>No. of Entries (1=Single, 2=Multiple...)</label><input type="text" id="visa_entry_id"></div>
+            <div class="form-group"><label>Port of Arrival</label><input type="text" id="entrypoint"></div>
+            <div class="form-group"><label>Port of Exit</label><input type="text" id="exitpoint"></div>
+        </div>
+
+        <h2>Previous Visit Details</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>Previous Stay Address</label><input type="text" id="prv_visit_add1"></div>
+            <div class="form-group"><label>Cities Visited</label><input type="text" id="visited_city"></div>
+            <div class="form-group"><label>Previous Visa No.</label><input type="text" id="old_visa_no"></div>
+            <div class="form-group"><label>Previous Visa Type ID</label><input type="text" id="old_visa_type_id"></div>
+            <div class="form-group"><label>Previous Visa Place of Issue</label><input type="text" id="oldvisaissueplace"></div>
+            <div class="form-group"><label>Previous Visa Issue Date</label><input type="text" id="oldvisaissuedateRaw"></div>
+            <div class="form-group"><label>Countries Visited (Last 10yrs)</label><input type="text" id="country_visited"></div>
+        </div>
+
+        <div class="footer-bar">
+            <div class="button-bar">
+                <span id="statusTextBottom" class="status-success"></span>
+                <button id="saveButtonBottom" class="btn btn-save">💾 Save Changes</button>
+            </div>
+        </div>
+    </div>
+    <script src="editor.js"></script>
+</body>
+</html>
