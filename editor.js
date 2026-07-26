@@ -1,3 +1,4 @@
+import { getProfiles, saveProfile } from "./storage.js";
 /**
  * editor.js — Indian Visa Autofill Pro v2.0
  * Handles the profile editing interface.
@@ -17,13 +18,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     let currentProfileData = {};
 
     // 1. Load data
-    const storage = await chrome.storage.local.get(profileKey);
-    if (!storage[profileKey]) {
+    let storage = await chrome.storage.local.get(profileKey);
+    
+    // Wait for auth to initialize
+    await new Promise(r => {
+        if (window.auth && window.auth.currentUser) return r();
+        if (window.auth) {
+            const unsub = window.auth.onAuthStateChanged(user => {
+                if (user) { unsub(); r(); }
+            });
+            setTimeout(() => { unsub(); r(); }, 3000);
+        } else {
+            r();
+        }
+    });
+
+    let cloudProfiles = {};
+    if (window.auth && window.auth.currentUser) {
+        cloudProfiles = await getProfiles();
+    }
+
+    if (cloudProfiles[profileKey]) {
+        currentProfileData = cloudProfiles[profileKey];
+    } else if (storage[profileKey]) {
+        currentProfileData = storage[profileKey];
+    } else {
         document.body.innerHTML = `<h2 style="text-align:center; margin-top:50px;">Error: Could not load data for ${profileKey}.</h2>`;
         return;
     }
-
-    currentProfileData = storage[profileKey];
     titleEl.textContent = currentProfileData._savedName || "Unknown Profile";
     
     if (currentProfileData._type) {
@@ -119,7 +141,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             titleEl.textContent = newData._savedName;
         }
 
-        await chrome.storage.local.set({ [profileKey]: newData });
+        if (window.auth && window.auth.currentUser) {
+            await saveProfile(profileKey, newData);
+        } else {
+            await chrome.storage.local.set({ [profileKey]: newData });
+        }
         currentProfileData = newData;
 
         statusTop.textContent = "✅ Saved!";
