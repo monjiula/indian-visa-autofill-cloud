@@ -291,7 +291,7 @@ async function callGeminiVision(apiKey, base64Image, mimeType, promptText) {
     system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
     contents: [{
       parts: [
-        { inline_data: { mime_type: mimeType, data: base64Image } },
+        { inlineData: { mimeType: mimeType, data: base64Image } },
         { text: promptText }
       ]
     }],
