@@ -141,7 +141,7 @@ async function saveApiKey() {
   const isValid = await testApiKey(key);
 
   if (isValid) {
-    await chrome.storage.local.set({ geminiApiKey: key });
+    await chrome.storage.sync.set({ geminiApiKey: key });
     updateKeyStatus('✅ API key saved & verified!', 'valid');
   } else {
     updateKeyStatus('❌ Invalid key. Please check and try again.', 'invalid');

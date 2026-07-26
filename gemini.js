@@ -11,7 +11,7 @@
 // ─── Configuration ────────────────────────────────────────────
 
 // GEMINI_MODEL is now dynamically fetched. Fallback:
-const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+const DEFAULT_GEMINI_MODEL = 'gemini-flash-latest';
 
 // ─── JSON Schema for structured output ────────────────────────
 
