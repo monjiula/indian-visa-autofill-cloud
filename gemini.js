@@ -260,7 +260,9 @@ async function fetchWithRetry(apiKey, body, model, maxRetries = 2) {
 
 async function getAdvancedSettings() {
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-    return await chrome.storage.local.get(['iv_model', 'iv_promptBGD', 'iv_promptPassport']);
+    const settings = await chrome.storage.local.get(['iv_model', 'iv_promptBGD', 'iv_promptPassport']);
+    if (settings.iv_model === 'gemini-1.5-flash' || settings.iv_model === 'gemini-2.5-flash') settings.iv_model = DEFAULT_GEMINI_MODEL;
+    return settings;
   }
   return {};
 }
