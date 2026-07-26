@@ -89,7 +89,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 });
 
 async function processExtraction(base64, mimeType, tabId) {
-  const storage = await chrome.storage.local.get(['geminiApiKey']);
+  const storage = await chrome.storage.sync.get(['geminiApiKey']);
   const apiKey = storage.geminiApiKey;
   if (!apiKey) {
     console.warn("[IVAP] No API key found for background extraction.");

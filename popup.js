@@ -116,7 +116,7 @@ function updateToggleUI(mode) {
 // ─── Settings (API Key) ──────────────────────────────────────
 
 async function loadApiKey() {
-  const stored = await chrome.storage.local.get(['geminiApiKey']);
+  const stored = await chrome.storage.sync.get(['geminiApiKey']);
   const key = stored.geminiApiKey || '';
   $('apiKeyInput').value = key;
   updateKeyStatus(key ? '✅ API key saved' : '', key ? 'valid' : '');
@@ -325,7 +325,7 @@ async function extractData(mode) {
 
   if (!files || files.length === 0) return showStatus('Please select a file.', 'error');
 
-  const stored = await chrome.storage.local.get(['geminiApiKey']);
+  const stored = await chrome.storage.sync.get(['geminiApiKey']);
   const apiKey = stored.geminiApiKey;
   if (!apiKey) {
     showStatus('⚙️ Please set your Gemini API key first!', 'error');
