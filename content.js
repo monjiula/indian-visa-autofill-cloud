@@ -1,5 +1,5 @@
 /**
- * content.js — Indian Visa Autofill Pro v2.0
+ * content.js — Indian Visa Autofill v2.0
  * Injected into indianvisa-bangladesh.nic.in to fill the form.
  */
 
@@ -980,7 +980,7 @@ async function injectFloatingWidget() {
         </style>
 
         <div class="ivap-header">
-            <span class="ivap-title">Indian Visa Autofill Pro</span>
+            <span class="ivap-title">Indian Visa Autofill</span>
             <button class="ivap-close" id="ivap-close-btn" title="Minimize">✕</button>
         </div>
         <div class="ivap-body">
@@ -1012,7 +1012,7 @@ async function injectFloatingWidget() {
     const fab = document.createElement('button');
     fab.id = 'ivap-fab';
     fab.innerHTML = '🇮🇳';
-    fab.title = 'Open Indian Visa Autofill Pro';
+    fab.title = 'Open Indian Visa Autofill';
     document.body.appendChild(fab);
 
     // Document Event Listeners

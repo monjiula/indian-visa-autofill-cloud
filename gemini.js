@@ -1,5 +1,5 @@
 /**
- * gemini.js — AI Extraction Engine for Indian Visa Autofill Pro v2.0
+ * gemini.js — AI Extraction Engine for Indian Visa Autofill v2.0
  * 
  * Replaces AWS Lambda with Google Gemini API (free tier).
  * Handles both BGD PDF text extraction and Passport image OCR.

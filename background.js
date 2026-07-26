@@ -1,5 +1,5 @@
 /**
- * background.js — Service Worker for Indian Visa Autofill Pro v2.1
+ * background.js — Service Worker for Indian Visa Autofill v2.1
  */
 
 import { extractFromPassport } from './gemini.js';

@@ -1,6 +1,6 @@
 import { getProfiles, saveProfile } from "./storage.js";
 /**
- * editor.js — Indian Visa Autofill Pro v2.0
+ * editor.js — Indian Visa Autofill v2.0
  * Handles the profile editing interface.
  */
 

@@ -1,5 +1,5 @@
 /**
- * sidepanel.js — Indian Visa Autofill Pro v2.0
+ * sidepanel.js — Indian Visa Autofill v2.0
  */
 
 import { getDocument, GlobalWorkerOptions } from './build/pdf.mjs';
@@ -405,7 +405,7 @@ function handleImport(event) {
       const mode = data._type || 'PASSPORT';
       const key = `${mode}_${Date.now()}`;
       
-      await chrome.storage.local.set({ [key]: data });
+      await saveProfile(key, data);
       showStatus(`✅ Imported ${data._savedName}`, 'success');
       loadProfiles(mode, false);
       
@@ -424,9 +424,16 @@ async function doAutofill() {
   if (!selectedEl) return showStatus('Select a profile first.', 'error');
 
   const key = selectedEl.dataset.key;
-  const stored = await chrome.storage.local.get(key);
+  let profileData = null;
+  const cloudProfiles = await getProfiles();
+  if (cloudProfiles[key]) {
+    profileData = cloudProfiles[key];
+  } else {
+    const stored = await chrome.storage.local.get(key);
+    profileData = stored[key];
+  }
 
-  if (stored[key]) {
+  if (profileData) {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab) return showStatus('No active tab to autofill.', 'error');
 
@@ -436,7 +443,7 @@ async function doAutofill() {
     }, () => {
       chrome.tabs.sendMessage(tab.id, { 
         type: 'FILL_FORM', 
-        data: stored[key],
+        data: profileData,
         fillMissingOnly: $('fillMissingOnly')?.checked || false
       });
     });
