@@ -663,8 +663,8 @@ async function routeAndFill(data) {
         await fillSelectWait('countryname_id', 'BANGLADESH');
         
         const mission = (data.missioncode_id && data.missioncode_id !== "NILL") ? data.missioncode_id : 'RAJSHAHI';
-        await fillSelectWait('missioncode_id', mission);
-        await fillSelectWait('nationality_id', 'BANGLADESH');
+        await fillSelectWait('missioncode_id', mission, 15000);
+        await fillSelectWait('nationality_id', 'BANGLADESH', 15000);
         fillText('dob_id', data.dob);
         
         openVisaStarterModal(data);
@@ -1049,7 +1049,10 @@ async function injectFloatingWidget() {
         
         let storage;
         try {
-            storage = await chrome.storage.local.get(null);
+            const cloudProfs = await new Promise(resolve => chrome.runtime.sendMessage({ type: "GET_PROFILES" }, resolve));
+            storage = cloudProfs || {};
+            const localData = await chrome.storage.local.get("lastSelectedProfile");
+            storage.lastSelectedProfile = localData.lastSelectedProfile;
         } catch (err) {
             console.warn("IV Autofill: Extension context invalidated.");
             return;
@@ -1102,13 +1105,14 @@ async function injectFloatingWidget() {
         if (!key) { alert('Please select a profile first!'); return; }
         
         try {
-            const stored = await chrome.storage.local.get(key);
-            if (stored[key]) {
+            const cloudProfs = await new Promise(resolve => chrome.runtime.sendMessage({ type: "GET_PROFILES" }, resolve));
+            const profileData = cloudProfs ? cloudProfs[key] : null;
+            if (profileData) {
                 await chrome.storage.local.set({ lastSelectedProfile: key });
                 sessionStorage.setItem('autofillInProgress', 'true');
-                sessionStorage.setItem('autofillData', JSON.stringify(stored[key]));
-                window.IVAP_SELECTED_PROFILE_DATA = stored[key];
-                routeAndFill(stored[key]);
+                sessionStorage.setItem('autofillData', JSON.stringify(profileData));
+                window.IVAP_SELECTED_PROFILE_DATA = profileData;
+                routeAndFill(profileData);
             }
         } catch (err) {
             console.warn("IV Autofill: Extension context invalidated.");
