@@ -2,15 +2,7 @@
  * background.js — Service Worker for Indian Visa Autofill v2.1
  */
 
-import { extractFromPassport } from "./gemini.js";
-import { getProfiles } from "./storage.js";
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "GET_PROFILES") {
-    getProfiles().then(profiles => sendResponse(profiles)).catch(err => sendResponse({}));
-    return true;
-  }
-});
+import { extractFromPassport } from './gemini.js';
 
 // ─── Initialization ───────────────────────────────────────────
 

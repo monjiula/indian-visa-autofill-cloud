@@ -12,6 +12,9 @@ export async function getProfiles() {
         profiles[doc.id] = doc.data();
     });
     
+    // Sync to local storage so content.js can access them
+    await chrome.storage.local.set(profiles);
+    
     return profiles;
 }
 
@@ -19,12 +22,14 @@ export async function saveProfile(key, data) {
     if (!window.auth || !window.auth.currentUser) return;
     const uid = window.auth.currentUser.uid;
     await window.db.collection('users').doc(uid).collection('profiles').doc(key).set(data);
+    await chrome.storage.local.set({ [key]: data });
 }
 
 export async function deleteProfile(key) {
     if (!window.auth || !window.auth.currentUser) return;
     const uid = window.auth.currentUser.uid;
     await window.db.collection('users').doc(uid).collection('profiles').doc(key).delete();
+    await chrome.storage.local.remove(key);
 }
 
 export async function getAllUsersProfiles() {
