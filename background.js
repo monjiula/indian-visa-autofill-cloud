@@ -40,7 +40,7 @@ chrome.runtime.onMessage.addListener((e, t, n) => {
 
   if (e && "SOLVE_CAPTCHA" === e.type) {
     solveCaptcha(e.fileData, e.mimeType || "image/png")
-      .then(text => n({ ok: true, data: { captchaText: text } }))
+      .then(text => n({ ok: true, data: { captchaText: text, data: { captchaText: text } } }))
       .catch(err => {
         console.warn("IV Autofill: Gemini Captcha Solve notice:", err.message);
         n({ ok: false, error: err.message });
