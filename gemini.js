@@ -46,15 +46,18 @@ const VISA_FIELDS_SCHEMA = {
     perm_address3:        { type: "string" },
     fthrname:             { type: "string" },
     father_nationality:   { type: "string" },
+    father_previous_nationality: { type: "string" },
     father_place_of_birth:{ type: "string" },
     father_country_of_birth: { type: "string" },
     mother_name:          { type: "string" },
     mother_nationality:   { type: "string" },
+    mother_previous_nationality: { type: "string" },
     mother_place_of_birth:{ type: "string" },
     mother_country_of_birth: { type: "string" },
     marital_status:       { type: "string" },
     spouse_name:          { type: "string" },
     spouse_nationality:   { type: "string" },
+    spouse_previous_nationality: { type: "string" },
     spouse_place_of_birth:{ type: "string" },
     spouse_country_of_birth: { type: "string" },
     occupation:           { type: "string" },
@@ -131,15 +134,18 @@ Carefully extract the following and map to the JSON schema:
 - Family: 
   * fthrname: Father's Name
   * father_nationality: Father's Nationality (default "BANGLADESH")
+  * father_previous_nationality: Father's Previous Nationality (default "BANGLADESH")
   * father_place_of_birth: Father's Place of Birth
   * father_country_of_birth: Father's Country of Birth (default "BANGLADESH")
   * mother_name: Mother's Name
   * mother_nationality: Mother's Nationality (default "BANGLADESH")
+  * mother_previous_nationality: Mother's Previous Nationality (default "BANGLADESH")
   * mother_place_of_birth: Mother's Place of Birth
   * mother_country_of_birth: Mother's Country of Birth (default "BANGLADESH")
   * marital_status: "0" (Married), "1" (Single)
   * spouse_name: Spouse's Name
   * spouse_nationality: Spouse's Nationality (default "BANGLADESH")
+  * spouse_previous_nationality: Spouse's Previous Nationality (default "BANGLADESH")
   * spouse_place_of_birth: Spouse's Place of Birth
   * spouse_country_of_birth: Spouse's Country of Birth (default "BANGLADESH")
 - Employment: Occupation, Employer Name, Designation, Address, Phone.
