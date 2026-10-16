@@ -1,3 +1,137 @@
+
+function extractReferencesFromCoordinates(items, fullText) {
+  let t = {
+    nameofsponsor_ind: "NILL",
+    add1ofsponsor_ind: "NILL",
+    add2ofsponsor_ind: "NILL",
+    stateofsponsor_ind: "NILL",
+    districtofsponsor_ind: "NILL",
+    phoneofsponsor_ind: "NILL",
+    nameofsponsor_msn: "NILL",
+    add1ofsponsor_msn: "NILL",
+    add2ofsponsor_msn: "NILL",
+    phoneofsponsor_msn: "NILL"
+  };
+  if (!Array.isArray(items) || items.length === 0) return t;
+  const o = items.find(e => /Details of Two Reference/i.test(e.str));
+  if (!o) return t;
+  const n = o.page || 1;
+  const s = items.filter(e => (e.page || 1) === n && e.str && e.str.trim());
+  const a = s.find(e => /In India/i.test(e.str));
+  const r = s.find(e => /In BANGLADESH/i.test(e.str));
+  let i = 310;
+  if (a && r && r.x > a.x) i = (a.x + r.x) / 2;
+  const c = s.find(e => /^Name$/i.test(e.str.trim()) && e.y < o.y);
+  const l = s.find(e => /^Address$/i.test(e.str.trim()) && c && e.y < c.y);
+  const d = s.find(e => /^Phone Number$/i.test(e.str.trim()) && l && e.y < l.y);
+  const p = s.find(e => /(DOCUMENTS UPLOADED|DECLARATION)/i.test(e.str) && d && e.y < d.y);
+  if (c && l && d) {
+    const formatLine = e => {
+      const arr = [];
+      e.forEach(item => {
+        const last = arr[arr.length - 1];
+        last && Math.abs(last.y - item.y) <= 4 ? last.items.push(item) : arr.push({ y: item.y, items: [item] });
+      });
+      return arr.map(row => (row.items.sort((a, b) => a.x - b.x), row.items.map(it => it.str).join(" ").trim())).filter(Boolean);
+    };
+    const indNames = s.filter(e => Math.abs(e.y - c.y) <= 6 && e.x > c.x + 10 && e.x < i).sort((a, b) => a.x - b.x);
+    const msnNames = s.filter(e => Math.abs(e.y - c.y) <= 6 && e.x >= i).sort((a, b) => a.x - b.x);
+    if (indNames.length) t.nameofsponsor_ind = indNames.map(e => e.str).join(" ").trim();
+    if (msnNames.length) t.nameofsponsor_msn = msnNames.map(e => e.str).join(" ").trim();
+
+    const topY = c.y - 7, botY = d.y + 6;
+    const indAddrItems = s.filter(e => e.y <= topY && e.y > botY && e.x > c.x + 10 && e.x < i && !/^Address$/i.test(e.str.trim())).sort((a, b) => b.y - a.y || a.x - b.x);
+    const msnAddrItems = s.filter(e => e.y <= topY && e.y > botY && e.x >= i && !/^Address$/i.test(e.str.trim())).sort((a, b) => b.y - a.y || a.x - b.x);
+    const indLines = formatLine(indAddrItems);
+    const msnLines = formatLine(msnAddrItems);
+
+    if (indLines.length > 0) {
+      const fullAddr = indLines.join(" ");
+      const pinMatch = fullAddr.match(/\b(\d{6})\b/);
+      if (pinMatch) t.add2ofsponsor_ind = pinMatch[1];
+      const stateRegex = /\b(ANDAMAN AND NICOBAR|ANDHRA PRADESH|ARUNACHAL PRADESH|ASSAM|BIHAR|CHANDIGARH|CHHATTISGARH|DADRA AND NAGAR HAVELI|DAMAN AND DIU|DELHI|GOA|GUJARAT|HARYANA|HIMACHAL PRADESH|JAMMU AND KASHMIR|JHARKHAND|KARNATAKA|KERALA|LADAKH|LAKSHADWEEP|MADHYA PRADESH|MAHARASHTRA|MANIPUR|MEGHALAYA|MIZORAM|NAGALAND|ODISHA|ORISSA|PUDUCHERRY|PUNJAB|RAJASTHAN|SIKKIM|TAMIL NADU|TELANGANA|TRIPURA|UTTAR PRADESH|UTTARAKHAND|WEST BENGAL)\b/i;
+      const stateMatch = fullAddr.match(stateRegex);
+      if (stateMatch) {
+        t.stateofsponsor_ind = stateMatch[1].toUpperCase();
+        const distMatch = fullAddr.slice(0, stateMatch.index).trim().match(/([A-Z\s]+)$/i);
+        if (distMatch) {
+          let dist = distMatch[1].trim().split(/\s+/).slice(-2).join(" ").replace(/^\d{6}\s*/, "").trim().toUpperCase();
+          if (dist === "NEW" && t.stateofsponsor_ind === "DELHI") dist = "NEW DELHI";
+          t.districtofsponsor_ind = dist;
+        }
+      }
+      if (/\bNEW\s+DELHI\b/i.test(fullAddr)) {
+        t.stateofsponsor_ind = "DELHI";
+        t.districtofsponsor_ind = "NEW DELHI";
+      }
+      let stopIdx = indLines.findIndex(e => /\b\d{6}\b/.test(e) || stateRegex.test(e));
+      if (stopIdx === -1) stopIdx = indLines.length;
+      const streetLines = indLines.slice(0, stopIdx);
+      t.add1ofsponsor_ind = (streetLines.length > 0 ? streetLines.map(e => e.trim()).join(" ") : fullAddr.replace(/\b\d{6}\b.*/, "")).replace(/\s*,\s*/g, ", ").slice(0, 50);
+    }
+
+    if (msnLines.length > 0) {
+      t.add1ofsponsor_msn = msnLines[0].trim().replace(/^[,\s]+|[,\s]+$/g, "").slice(0, 50);
+      if (msnLines.length > 1) {
+        t.add2ofsponsor_msn = msnLines.slice(1).map(e => e.trim().replace(/^[,\s]+|[,\s]+$/g, "")).join(", ").slice(0, 50);
+      }
+    }
+
+    const pTopY = d.y + 6, pBotY = p ? p.y + 4 : d.y - 25;
+    const indPhoneItems = s.filter(e => e.y <= pTopY && e.y > pBotY && e.x > d.x + 10 && e.x < i).sort((a, b) => b.y - a.y || a.x - b.x);
+    const msnPhoneItems = s.filter(e => e.y <= pTopY && e.y > pBotY && e.x >= i).sort((a, b) => b.y - a.y || a.x - b.x);
+    const indPhone = indPhoneItems.map(e => e.str).join("").replace(/[^\d]/g, "");
+    const msnPhone = msnPhoneItems.map(e => e.str).join("").replace(/[^\d]/g, "");
+    if (indPhone) t.phoneofsponsor_ind = indPhone;
+    if (msnPhone) {
+      const bdMatch = msnPhone.match(/(?:88)?(01[3-9]\d{8})/);
+      t.phoneofsponsor_msn = bdMatch ? bdMatch[1] : msnPhone;
+    }
+  }
+  return t;
+}
+
+async function extractPhotoFromPage(page) {
+  try {
+    const opList = await page.getOperatorList();
+    const imgNames = [];
+    for (let i = 0; i < opList.fnArray.length; i++) {
+      const arg = opList.argsArray[i];
+      if (arg && arg[0] && typeof arg[0] === 'string') {
+        const s = arg[0];
+        if (s.startsWith("img_") || s.startsWith("g_img") || s.includes("img") || s.includes("Img")) imgNames.push(s);
+      }
+    }
+    const unique = [...new Set(imgNames)];
+    const getObj = name => new Promise(res => {
+      try {
+        if (page.objs && typeof page.objs.get === 'function') page.objs.get(name, obj => res(obj));
+        else if (page.commonObjs && typeof page.commonObjs.get === 'function') page.commonObjs.get(name, obj => res(obj));
+        else res(null);
+      } catch (err) { res(null); }
+      setTimeout(() => res(null), 300);
+    });
+    for (const name of unique) {
+      const obj = await getObj(name);
+      if (!obj) continue;
+      const w = obj.width, h = obj.height;
+      if (!w || !h || w < 60 || h < 60) continue;
+      const aspect = w / h;
+      if (aspect < 0.7 || aspect > 1.4) continue;
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (obj.bitmap) {
+        ctx.drawImage(obj.bitmap, 0, 0);
+        return canvas.toDataURL("image/jpeg", 0.92);
+      }
+    }
+  } catch (err) {
+    console.warn("Photo extraction error:", err);
+  }
+  return "";
+}
+
 /**
  * popup.js — Indian Visa Autofill v2.0
  */
@@ -274,20 +408,49 @@ async function checkDuplicate(passNo) {
 }
 
 async function processSingleFile(file, mode, apiKey) {
-  let extracted;
+  let extracted = null;
+  let photoData = "";
+
   if (mode === 'BGD') {
     if (file.type !== 'application/pdf') throw new Error('Only PDF supported for BGD mode.');
     const arrayBuf = await file.arrayBuffer();
     const pdfDoc = await getDocument(new Uint8Array(arrayBuf)).promise;
     let fullText = '';
+    let coordItems = [];
+
     for (let i = 1; i <= pdfDoc.numPages; i++) {
       const page = await pdfDoc.getPage(i);
       const content = await page.getTextContent();
       fullText += content.items.map(item => item.str).join(' ');
+      for (const item of content.items) {
+        if (item && item.str && item.str.trim()) {
+          coordItems.push({
+            str: item.str.trim(),
+            x: Math.round(10 * (item.transform ? item.transform[4] : 0)) / 10,
+            y: Math.round(10 * (item.transform ? item.transform[5] : 0)) / 10,
+            page: i
+          });
+        }
+      }
+      if (i === 1) {
+        photoData = await extractPhotoFromPage(page);
+      }
     }
     
     if (fullText.trim().length > 0) {
       extracted = await extractFromBGDText(apiKey, fullText);
+      // Dual reference coordinate enhancement
+      if (Array.isArray(coordItems) && coordItems.length > 0) {
+        const refData = extractReferencesFromCoordinates(coordItems, fullText);
+        Object.assign(extracted, refData);
+      }
+      if (!extracted.place_of_stay1 || extracted.place_of_stay1 === 'NILL') {
+        extracted.place_of_stay1 = extracted.nameofsponsor_ind;
+        extracted.pos_address1 = extracted.add1ofsponsor_ind;
+        extracted.pos_phone1 = extracted.phoneofsponsor_ind;
+      }
+      const bgdMatch = fullText.match(/(?:Web\s*File\s*No\.?|Application\s*Id|File\s*No\.?)\s*:?\s*(BGD[A-Z0-9]{7,12})/i) || fullText.match(/\b(BGD[A-Z0-9]{8,12})\b/i);
+      if (bgdMatch) extracted.bgd_id = bgdMatch[1].toUpperCase().trim();
     } else {
       const base64 = await fileToBase64(file);
       extracted = await extractFromPassport(apiKey, base64, 'application/pdf');
@@ -296,6 +459,8 @@ async function processSingleFile(file, mode, apiKey) {
     const base64 = await fileToBase64(file);
     extracted = await extractFromPassport(apiKey, base64, file.type);
   }
+
+  if (!extracted) throw new Error("Could not extract applicant data from file.");
 
   // Check duplicate
   const isDuplicate = await checkDuplicate(extracted.passNo);
@@ -310,6 +475,7 @@ async function processSingleFile(file, mode, apiKey) {
 
   extracted._type = mode;
   extracted._savedName = profileName;
+  if (photoData) extracted._photo = photoData;
 
   const profileKey = `${mode}_${Date.now()}_${Math.floor(Math.random()*1000)}`;
   await saveProfile(profileKey, extracted);

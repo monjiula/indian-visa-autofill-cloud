@@ -1,251 +1,1070 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta charset="UTF-8">
-    <title>Edit Profile | Indian Visa Autofill</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Edit Profile</title>
     <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            margin: 0; 
-            background: linear-gradient(160deg, #0f0c29 0%, #1a1a3e 40%, #24243e 100%);
-            color: #e0e0e0;
-            padding: 30px;
-            min-height: 100vh;
-        }
-        
-        .container { 
-            max-width: 1000px; 
-            margin: 0 auto; 
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            padding: 30px; 
-            border-radius: 16px; 
-            backdrop-filter: blur(20px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            --primary-hover: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+            --primary-solid: #4f46e5;
+            --success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --success-hover: linear-gradient(135deg, #059669 0%, #047857 100%);
+            --success-solid: #10b981;
+            --danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --bg-main: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.02);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .header-area {
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 30px 15px;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-top: 0;
+            color: var(--text-main);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 20px;
-            margin-bottom: 30px;
+            justify-content: space-between;
         }
 
-        h1 { margin: 0; font-size: 24px; font-weight: 700; color: #fff; }
-        .profile-name { color: #8b5cf6; }
-        
-        .type-badge {
-            font-size: 11px; font-weight: 700; color: #fff;
-            background: linear-gradient(135deg, #6366f1, #a78bfa);
-            padding: 4px 10px; border-radius: 6px;
-            margin-left: 12px; vertical-align: middle;
-        }
-
-        h2 { 
-            margin: 30px 0 15px; 
-            font-size: 16px; 
-            color: #a78bfa; 
-            border-bottom: 1px dashed rgba(255,255,255,0.1); 
-            padding-bottom: 8px; 
-        }
-
-        .form-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 20px; 
-        }
-
-        .form-group { display: flex; flex-direction: column; position: relative; }
-        .form-group label { 
-            font-weight: 600; font-size: 11px; margin-bottom: 6px; 
-            color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        
-        .form-group input { 
-            padding: 10px 12px; 
-            background: rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.1); 
-            border-radius: 8px; 
-            color: #fff;
-            font-size: 13px;
-            transition: all 0.2s;
-        }
-
-        .form-group input:focus {
-            border-color: #8b5cf6;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(139,92,246,0.2);
-        }
-
-        /* Validation status dots */
-        .status-dot {
-            position: absolute;
-            right: 12px;
-            top: 36px;
-            width: 8px; height: 8px;
-            border-radius: 50%;
-        }
-        .valid { background: #10b981; box-shadow: 0 0 5px #10b981; }
-        .empty { background: #f59e0b; box-shadow: 0 0 5px #f59e0b; }
-
-        .button-bar { 
+        h2 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-top: 35px;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            border-left: 4px solid var(--primary-solid);
+            padding-left: 12px;
+            letter-spacing: 0.2px;
+            text-transform: uppercase;
             display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .green-light-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: #f1f5f9;
+            color: #64748b;
+            text-transform: none;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .green-light-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            transition: all 0.3s ease;
+        }
+
+        .green-light-badge.active {
+            background: #ecfdf5;
+            color: #047857;
+            border-color: #a7f3d0;
+        }
+
+        .green-light-badge.active .dot {
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+        }
+
+        .section-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .quick-ref-wrapper {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: none;
+        }
+
+        .quick-ref-select {
+            padding: 4px 14px;
+            min-width: 220px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: 1.5px solid #6366f1;
+            background: #ffffff;
+            color: #4f46e5;
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition);
+            box-shadow: 0 1px 3px rgba(99, 102, 241, 0.15);
+            font-family: inherit;
+            text-transform: none;
+        }
+
+        .quick-ref-select:hover {
+            border-color: #4338ca;
+            background: #f5f3ff;
+            box-shadow: 0 2px 5px rgba(99, 102, 241, 0.25);
+        }
+
+        .quick-ref-select:focus {
+            border-color: #4338ca;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px 16px;
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 11.5px;
+            margin-bottom: 6px;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 13.5px;
+            color: var(--text-main);
+            background-color: #f8fafc;
+            transition: var(--transition);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            background-color: #ffffff;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+        }
+
+        .button-bar {
+            margin-top: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: flex-end;
             align-items: center;
             gap: 15px;
         }
-        
-        .btn { 
-            padding: 10px 20px; font-weight: 700; border: none; 
-            cursor: pointer; border-radius: 8px; font-size: 13px;
-            transition: all 0.2s;
-        }
-        .btn-save { background: linear-gradient(135deg, #10b981, #059669); color: white; }
-        .btn-save:hover { box-shadow: 0 4px 15px rgba(16,185,129,0.4); transform: translateY(-1px); }
-        .btn-copy { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.15); }
-        .btn-copy:hover { background: rgba(255,255,255,0.15); }
 
-        #statusText { font-size: 13px; font-weight: 600; }
-        .status-success { color: #10b981; }
-        .status-saving { color: #60a5fa; }
-        
-        .footer-bar { margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: flex-end; }
+        button {
+            padding: 10px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13.5px;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.25);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 0.1px;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+            background: var(--primary-hover);
+        }
+
+        button:active {
+            transform: translateY(0);
+            transform: scale(0.98);
+        }
+
+        .status {
+            font-size: 13px;
+            font-weight: 700;
+            color: #065f46;
+            background: #d1fae5;
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid #a7f3d0;
+            transition: var(--transition);
+        }
+
+        .status:empty {
+            display: none;
+        }
+
+        /* Applicant Photo Card & Modal CSS */
+        .personal-section-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .personal-section-container .form-grid {
+            flex: 1;
+        }
+
+        .personal-section-container .photo-card {
+            width: 220px;
+            flex-shrink: 0;
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 820px) {
+            .personal-section-container {
+                flex-direction: column-reverse;
+                align-items: center;
+            }
+            .personal-section-container .form-grid {
+                width: 100%;
+            }
+        }
+
+        .photo-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            width: 220px;
+            margin-bottom: 20px;
+        }
+
+        .photo-box {
+            width: 200px;
+            height: 200px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .photo-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-sub);
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .photo-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .photo-btn {
+            width: 100%;
+            padding: 9px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .photo-btn.primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+        }
+
+        .photo-btn.primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .photo-btn.secondary {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+        }
+
+        .photo-btn.secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Interactive Crop Modal */
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .crop-modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 340px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+        }
+
+        .crop-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .crop-modal-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: #64748b;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .crop-canvas-wrapper {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 0 auto 16px auto;
+            border: 2px solid #6366f1;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: grab;
+            background: #0f172a;
+            box-shadow: var(--shadow-md);
+        }
+
+        .crop-canvas-wrapper:active {
+            cursor: grabbing;
+        }
+
+        .crop-grid-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            border: 2px dashed rgba(255, 255, 255, 0.6);
+            box-shadow: inset 0 0 0 2000px rgba(0, 0, 0, 0.15);
+        }
+
+        .crop-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .crop-controls label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .crop-controls input[type="range"] {
+            width: 180px;
+            accent-color: #4f46e5;
+        }
+
+        .crop-hint {
+            font-size: 11px;
+            color: #64748b;
+            text-align: center;
+        }
+
+        .crop-modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* --- PASSPORT EXPIRY WARNING ANIMATIONS & BANNER --- */
+        @keyframes redYellowPulse {
+            0% {
+                background-color: #fee2e2;
+                border-color: #ef4444;
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4), 0 2px 8px rgba(239, 68, 68, 0.15);
+            }
+            50% {
+                background-color: #fef3c7;
+                border-color: #f59e0b;
+                box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.25), 0 4px 14px rgba(245, 158, 11, 0.25);
+            }
+            100% {
+                background-color: #fee2e2;
+                border-color: #ef4444;
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4), 0 2px 8px rgba(239, 68, 68, 0.15);
+            }
+        }
+
+        @keyframes redYellowPulseField {
+            0% {
+                background-color: #fff1f2;
+                border-color: #ef4444;
+                box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.35);
+            }
+            50% {
+                background-color: #fffbeb;
+                border-color: #f59e0b;
+                box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35);
+            }
+            100% {
+                background-color: #fff1f2;
+                border-color: #ef4444;
+                box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.35);
+            }
+        }
+
+        .expiry-warning-banner {
+            display: none;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: 2px solid #ef4444;
+            margin-top: 15px;
+            margin-bottom: 20px;
+            animation: redYellowPulse 2.5s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+
+        .expiry-warning-banner.active {
+            display: flex;
+        }
+
+        .expiry-warning-banner .warning-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #ef4444;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: bold;
+            flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);
+        }
+
+        .expiry-warning-banner .warning-text {
+            font-size: 14px;
+            font-weight: 700;
+            color: #b91c1c;
+            line-height: 1.35;
+        }
+
+        .expiry-warning-banner .warning-subtext {
+            font-size: 12px;
+            font-weight: 500;
+            color: #92400e;
+            margin-top: 2px;
+        }
+
+        .input-expiry-warning {
+            animation: redYellowPulseField 2.5s ease-in-out infinite !important;
+            color: #b91c1c !important;
+            font-weight: 700 !important;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <div class="header-area">
+        <h1>Edit Profile: <span id="profileName" style="color: #007bff;"></span></h1>
+
+        <div class="button-bar">
+            <span class="status"></span>
+            <button class="saveButton">Save Changes</button>
+        </div>
+
+        <!-- TOP PASSPORT EXPIRY WARNING BANNER -->
+        <div id="expiryWarningBanner" class="expiry-warning-banner">
+            <div class="warning-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
             <div>
-                <h1>Edit Profile: <span id="profileName" class="profile-name"></span> <span id="typeBadge" class="type-badge"></span></h1>
-            </div>
-            <div class="button-bar">
-                <span id="statusTextTop" class="status-success"></span>
-                <button id="copyButton" class="btn btn-copy">📋 Copy Profile</button>
-                <button id="saveButtonTop" class="btn btn-save">💾 Save Changes</button>
+                <div class="warning-text">Passport expiry date is less then 6 month</div>
+                <div class="warning-subtext">This passport is not valid for applying for an Indian Visa. Please renew the passport before applying.</div>
             </div>
         </div>
 
-        <h2>Personal Details</h2>
-        <div class="form-grid">
-            <div class="form-group"><label>Surname</label><input type="text" id="surname"></div>
-            <div class="form-group"><label>Given Name</label><input type="text" id="givenName"></div>
-            <div class="form-group"><label>Gender (M/F)</label><input type="text" id="gender"></div>
-            <div class="form-group"><label>Date of Birth (dd/mm/yyyy)</label><input type="text" id="dob"></div>
-            <div class="form-group"><label>Place of Birth (Town/City)</label><input type="text" id="pobTown"></div>
-            <div class="form-group"><label>Place of Birth (Country)</label><input type="text" id="pobCountry"></div>
-            <div class="form-group"><label>Citizenship / National ID No</label><input type="text" id="citizenId"></div>
-            <div class="form-group"><label>Religion</label><input type="text" id="religion"></div>
-            <div class="form-group"><label>Visible Identification Marks</label><input type="text" id="identity_marks"></div>
-            <div class="form-group"><label>Educational Qualification</label><input type="text" id="education"></div>
-            <div class="form-group"><label>Nationality</label><input type="text" id="nationality"></div>
-            <div class="form-group" style="grid-column: span 3;">
-                <label>Applicant Photo (For Printed Documents)</label>
-                <input type="file" id="photoInput" accept="image/jpeg, image/png, image/jpg" style="padding: 5px;">
-                <img id="photoPreview" src="" style="display:none; max-height: 100px; margin-top:10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">
-                <input type="hidden" id="photoBase64">
+        <h2>
+            Personal Details
+            <span class="green-light-badge" id="badge-personal"><span class="dot"></span><span class="badge-text">Empty</span></span>
+        </h2>
+        <div class="personal-section-container">
+            <div class="form-grid">
+                <div class="form-group"><label for="surname">Surname</label><input type="text" id="surname"></div>
+                <div class="form-group"><label for="givenName">Given Name</label><input type="text" id="givenName"></div>
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender">
+                        <option value="">Select gender</option>
+                        <option value="M">MALE</option>
+                        <option value="F">FEMALE</option>
+                        <option value="X">TRANSGENDER</option>
+                    </select>
+                </div>
+                <div class="form-group"><label for="dob">Date of Birth (dd/mm/yyyy)</label><input type="text" id="dob">
+                </div>
+                <div class="form-group"><label for="pobTown">Place of Birth (Town/City)</label><input type="text"
+                        id="pobTown"></div>
+                <div class="form-group"><label for="pobCountry">Place of Birth (Country)</label><input type="text"
+                        id="pobCountry"></div>
+                <div class="form-group"><label for="citizenId">Citizenship / National ID No</label><input type="text"
+                        id="citizenId"></div>
+                <div class="form-group">
+                    <label for="religion">Religion</label>
+                    <select id="religion">
+                        <option value="">Select Religion</option>
+                        <option value="BAHAI">BAHAI</option>
+                        <option value="BUDDHISM">BUDDHISM</option>
+                        <option value="CHRISTIAN">CHRISTIAN</option>
+                        <option value="HINDU">HINDU</option>
+                        <option value="ISLAM">ISLAM</option>
+                        <option value="JAINISM">JAINISM</option>
+                        <option value="JUDAISM">JUDAISM</option>
+                        <option value="OTHERS">OTHERS</option>
+                        <option value="PARSI">PARSI</option>
+                        <option value="SIKH">SIKH</option>
+                        <option value="ZOROASTRIAN">ZOROASTRIAN</option>
+                    </select>
+                </div>
+                <div class="form-group"><label for="identity_marks">Visible Identification Marks</label><input type="text"
+                        id="identity_marks"></div>
+                <div class="form-group">
+                    <label for="education">Educational Qualification</label>
+                    <select id="education">
+                        <option value="">Select Education</option>
+                        <option value="BELOW MATRICULATION">BELOW MATRICULATION</option>
+                        <option value="GRADUATE">GRADUATE</option>
+                        <option value="HIGHER SECONDARY">HIGHER SECONDARY</option>
+                        <option value="ILLITERATE">ILLITERATE</option>
+                        <option value="MATRICULATION">MATRICULATION</option>
+                        <option value="NA BEING MINOR">NA BEING MINOR</option>
+                        <option value="OTHERS">OTHERS</option>
+                        <option value="POST GRADUATE">POST GRADUATE</option>
+                        <option value="PROFESSIONAL">PROFESSIONAL</option>
+                    </select>
+                </div>
+                <div class="form-group"><label for="nationality">Nationality</label><input type="text" id="nationality">
+                </div>
+            </div>
+
+            <!-- Applicant Photo Card (Moved to Right Side of Personal Details) -->
+            <div class="photo-card">
+                <div class="photo-box">
+                    <div id="photoPlaceholder" class="photo-placeholder">
+                        <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #94a3b8;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <span>Applicant Photo<br><strong style="color:#64748b; font-size:11px;">200 x 200 px</strong></span>
+                    </div>
+                    <img id="applicantPhotoPreview" class="photo-preview hidden" alt="Applicant Photo" />
+                </div>
+                <div class="photo-actions">
+                    <button type="button" id="btnUploadPhoto" class="photo-btn primary">Upload Photo</button>
+                    <button type="button" id="btnChangePhoto" class="photo-btn primary hidden">Change Photo</button>
+                    <button type="button" id="btnCropPhoto" class="photo-btn secondary hidden">Crop Photo</button>
+                    <input type="file" id="photoFileInput" accept="image/*" style="display: none;" />
+                </div>
             </div>
         </div>
 
-        <h2>Applicant Photo (For Forms & Documents)</h2>
-        <div class="form-grid" style="display: block;">
-            <div class="form-group" style="margin-bottom:10px;">
-                <label>Upload Passport Photo (JPEG/PNG)</label>
-                <input type="file" id="photoInput" accept="image/png, image/jpeg" style="border:none; padding:10px 0;">
-                <input type="hidden" id="photoBase64">
+        <h2>
+            Passport Details
+            <span class="green-light-badge" id="badge-passport"><span class="dot"></span><span class="badge-text">Empty</span></span>
+        </h2>
+        <div class="form-grid">
+            <div class="form-group"><label for="passNo">Passport No.</label><input type="text" id="passNo"></div>
+            <div class="form-group"><label for="passPlace">Passport Place of Issue</label><input type="text"
+                    id="passPlace"></div>
+            <div class="form-group"><label for="passDate">Passport Issue Date (dd/mm/yyyy)</label><input type="text"
+                    id="passDate"></div>
+            <div class="form-group"><label for="passExpire">Passport Expiry Date (dd/mm/yyyy)</label><input type="text"
+                    id="passExpire"></div>
+        </div>
+
+        <h2>
+            Contact Details (Present)
+            <span class="green-light-badge" id="badge-contact-pres"><span class="dot"></span><span class="badge-text">Empty</span></span>
+        </h2>
+        <div class="form-grid">
+            <div class="form-group"><label for="pres_add1">Present Address 1</label><input type="text" id="pres_add1">
             </div>
-            <img id="photoPreview" style="display:none; max-width: 150px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.2); margin-top: 10px;">
+            <div class="form-group"><label for="pres_add2">Present Address 2</label><input type="text" id="pres_add2">
+            </div>
+            <div class="form-group"><label for="pres_add3">Present City/Town</label><input type="text" id="pres_add3">
+            </div>
+            <div class="form-group"><label for="pres_country">Present Country</label><input type="text"
+                    id="pres_country"></div>
+            <div class="form-group"><label for="pincode">Pincode</label><input type="text" id="pincode"></div>
+            <div class="form-group"><label for="pres_phone">Phone No</label><input type="text" id="pres_phone"></div>
+            <div class="form-group"><label for="isd_code1">ISD Code</label><input type="text" id="isd_code1"></div>
+            <div class="form-group"><label for="mobile">Mobile No</label><input type="text" id="mobile"></div>
+            <div class="form-group"><label for="email_id">Email Address</label><input type="text" id="email_id"></div>
         </div>
 
-        <h2>Passport Details</h2>
+        <h2>
+            Contact Details (Permanent)
+            <span class="green-light-badge" id="badge-contact-perm"><span class="dot"></span><span class="badge-text">Empty</span></span>
+        </h2>
         <div class="form-grid">
-            <div class="form-group"><label>Passport No.</label><input type="text" id="passNo"></div>
-            <div class="form-group"><label>Place of Issue</label><input type="text" id="passPlace"></div>
-            <div class="form-group"><label>Issue Date (dd/mm/yyyy)</label><input type="text" id="passDate"></div>
-            <div class="form-group"><label>Expiry Date (dd/mm/yyyy)</label><input type="text" id="passExpire"></div>
-        </div>
-        
-        <h2>Contact Details (Present)</h2>
-        <div class="form-grid">
-            <div class="form-group"><label>Address 1</label><input type="text" id="pres_add1"></div>
-            <div class="form-group"><label>Address 2</label><input type="text" id="pres_add2"></div>
-            <div class="form-group"><label>City/Town</label><input type="text" id="pres_add3"></div>
-            <div class="form-group"><label>Country</label><input type="text" id="pres_country"></div>
-            <div class="form-group"><label>Pincode</label><input type="text" id="pincode"></div>
-            <div class="form-group"><label>Phone No</label><input type="text" id="pres_phone"></div>
-            <div class="form-group"><label>ISD Code</label><input type="text" id="isd_code1"></div>
-            <div class="form-group"><label>Mobile No</label><input type="text" id="mobile"></div>
-            <div class="form-group"><label>Email Address</label><input type="text" id="email_id"></div>
+            <div class="form-group"><label for="perm_address1">Permanent Address 1</label><input type="text"
+                    id="perm_address1"></div>
+            <div class="form-group"><label for="perm_address2">Permanent Address 2</label><input type="text"
+                    id="perm_address2"></div>
+            <div class="form-group"><label for="perm_address3">Permanent City/Town</label><input type="text"
+                    id="perm_address3"></div>
         </div>
 
-        <h2>Contact Details (Permanent)</h2>
+        <h2>
+            Family Details
+            <span class="green-light-badge" id="badge-family"><span class="dot"></span><span class="badge-text">Empty</span></span>
+        </h2>
         <div class="form-grid">
-            <div class="form-group"><label>Address 1</label><input type="text" id="perm_address1"></div>
-            <div class="form-group"><label>Address 2</label><input type="text" id="perm_address2"></div>
-            <div class="form-group"><label>City/Town</label><input type="text" id="perm_address3"></div>
+            <div class="form-group"><label for="fthrname">Father's Name</label><input type="text" id="fthrname"></div>
+            <div class="form-group"><label for="father_nationality">Father's Nationality</label><input type="text"
+                    id="father_nationality"></div>
+            <div class="form-group"><label for="father_place_of_birth">Father's Place of Birth</label><input type="text"
+                    id="father_place_of_birth"></div>
+            <div class="form-group"><label for="mother_name">Mother's Name</label><input type="text" id="mother_name">
+            </div>
+            <div class="form-group"><label for="mother_place_of_birth">Mother's Place of Birth</label><input type="text"
+                    id="mother_place_of_birth"></div>
+            <div class="form-group"><label for="marital_status">Marital Status (0=Married, 1=Single)</label><input
+                    type="text" id="marital_status"></div>
+            <div class="form-group"><label for="spouse_name">Spouse's Name</label><input type="text" id="spouse_name">
+            </div>
+            <div class="form-group"><label for="spouse_place_of_birth">Spouse's Place of Birth</label><input type="text"
+                    id="spouse_place_of_birth"></div>
+            <div class="form-group"><label for="grandparent_flag2">Grandparents from Pakistan? (YES/NO)</label><input
+                    type="text" id="grandparent_flag2"></div>
         </div>
 
-        <h2>Family Details</h2>
+        <h2>
+            Profession Details
+            <span class="green-light-badge" id="badge-profession"><span class="dot"></span><span class="badge-text">Empty</span></span>
+        </h2>
         <div class="form-grid">
-            <div class="form-group"><label>Father's Name</label><input type="text" id="fthrname"></div>
-            <div class="form-group"><label>Father's Nationality</label><input type="text" id="father_nationality"></div>
-            <div class="form-group"><label>Father's Place of Birth</label><input type="text" id="father_place_of_birth"></div>
-            <div class="form-group"><label>Mother's Name</label><input type="text" id="mother_name"></div>
-            <div class="form-group"><label>Mother's Place of Birth</label><input type="text" id="mother_place_of_birth"></div>
-            <div class="form-group"><label>Marital Status (0=Married, 1=Single)</label><input type="text" id="marital_status"></div>
-            <div class="form-group"><label>Spouse's Name</label><input type="text" id="spouse_name"></div>
-            <div class="form-group"><label>Spouse's Place of Birth</label><input type="text" id="spouse_place_of_birth"></div>
+            <div class="form-group">
+                <label for="occupation">Present Occupation</label>
+                <select id="occupation">
+                    <option value="">Select Occupation</option>
+                    <option value="AIR FORCE">AIR FORCE</option>
+                    <option value="BUSINESS PERSON">BUSINESS PERSON</option>
+                    <option value="CAMERAMAN">CAMERAMAN</option>
+                    <option value="CHARITY/SOCIAL WORKER">CHARITY/SOCIAL WORKER</option>
+                    <option value="CHARTERED ACCOUNTANT">CHARTERED ACCOUNTANT</option>
+                    <option value="COLLEGE/UNIVERSITY TEACHER">COLLEGE/UNIVERSITY TEACHER</option>
+                    <option value="DIPLOMAT">DIPLOMAT</option>
+                    <option value="DOCTOR">DOCTOR</option>
+                    <option value="ENGINEER">ENGINEER</option>
+                    <option value="FILM PRODUCER">FILM PRODUCER</option>
+                    <option value="GOVERNMENT SERVICE">GOVERNMENT SERVICE</option>
+                    <option value="HOUSE WIFE">HOUSE WIFE</option>
+                    <option value="JOURNALIST">JOURNALIST</option>
+                    <option value="LABOUR">LABOUR</option>
+                    <option value="LAWYER">LAWYER</option>
+                    <option value="MEDIA">MEDIA</option>
+                    <option value="MILITARY">MILITARY</option>
+                    <option value="MISSIONARY">MISSIONARY</option>
+                    <option value="NAVY">NAVY</option>
+                    <option value="NEWS BROADCASTER">NEWS BROADCASTER</option>
+                    <option value="OFFICIAL">OFFICIAL</option>
+                    <option value="OTHERS">OTHERS</option>
+                    <option value="POLICE">POLICE</option>
+                    <option value="PRESS">PRESS</option>
+                    <option value="PRIVATE SERVICE">PRIVATE SERVICE</option>
+                    <option value="PUBLISHER">PUBLISHER</option>
+                    <option value="REPORTER">REPORTER</option>
+                    <option value="RESEARCHER">RESEARCHER</option>
+                    <option value="RETIRED">RETIRED</option>
+                    <option value="SEA MAN">SEA MAN</option>
+                    <option value="SELF EMPLOYED/ FREELANCER">SELF EMPLOYED/ FREELANCER</option>
+                    <option value="STUDENT">STUDENT</option>
+                    <option value="TRADER">TRADER</option>
+                    <option value="TV PRODUCER">TV PRODUCER</option>
+                    <option value="UN-EMPLOYED">UN-EMPLOYED</option>
+                    <option value="UN OFFICIAL">UN OFFICIAL</option>
+                    <option value="WORKER">WORKER</option>
+                    <option value="WRITER">WRITER</option>
+                </select>
+            </div>
+            <div class="form-group"><label for="empname">Employer Name/Business</label><input type="text" id="empname">
+            </div>
+            <div class="form-group"><label for="empdesignation">Designation</label><input type="text"
+                    id="empdesignation"></div>
+            <div class="form-group"><label for="empaddress">Employer Address</label><input type="text" id="empaddress">
+            </div>
+            <div class="form-group"><label for="empphone">Employer Phone</label><input type="text" id="empphone">
+            </div>
         </div>
 
-        <h2>Profession Details</h2>
-        <div class="form-grid">
-            <div class="form-group"><label>Present Occupation</label><input type="text" id="occupation"></div>
-            <div class="form-group"><label>Employer Name/Business</label><input type="text" id="empname"></div>
-            <div class="form-group"><label>Designation</label><input type="text" id="empdesignation"></div>
-            <div class="form-group"><label>Employer Address</label><input type="text" id="empaddress"></div>
-        </div>
-        
         <h2>Visa Details (Medical)</h2>
         <div class="form-grid">
-            <div class="form-group"><label>Hospital Name</label><input type="text" id="hsptNameMsn"></div>
-            <div class="form-group"><label>Hospital Address</label><input type="text" id="hsptAddMsn"></div>
-            <div class="form-group"><label>Doctor Name</label><input type="text" id="docNameMsn"></div>
-            <div class="form-group"><label>Hospital Phone</label><input type="text" id="phMsn"></div>
-            <div class="form-group"><label>Hospital Email</label><input type="text" id="emailMsn"></div>
-            <div class="form-group"><label>Illness</label><input type="text" id="illness"></div>
+            <div class="form-group"><label for="hsptNameMsn">Hospital Name</label><input type="text" id="hsptNameMsn">
+            </div>
+            <div class="form-group"><label for="hsptAddMsn">Hospital Address</label><input type="text" id="hsptAddMsn">
+            </div>
+            <div class="form-group"><label for="docNameMsn">Doctor Name</label><input type="text" id="docNameMsn"></div>
+            <div class="form-group"><label for="phMsn">Hospital Phone</label><input type="text" id="phMsn"></div>
+            <div class="form-group"><label for="emailMsn">Hospital Email</label><input type="text" id="emailMsn"></div>
+            <div class="form-group"><label for="illness">Illness</label><input type="text" id="illness"></div>
         </div>
 
         <h2>Visa Details (General)</h2>
         <div class="form-grid">
-            <div class="form-group"><label>Visa Duration (Months)</label><input type="text" id="duration"></div>
-            <div class="form-group"><label>No. of Entries (1=Single, 2=Multiple...)</label><input type="text" id="visa_entry_id"></div>
-            <div class="form-group"><label>Port of Arrival</label><input type="text" id="entrypoint"></div>
-            <div class="form-group"><label>Port of Exit</label><input type="text" id="exitpoint"></div>
+            <div class="form-group"><label for="duration">Visa Duration (Months)</label><input type="text"
+                    id="duration"></div>
+            <div class="form-group"><label for="jouryney_id">Expected Date of Journey (dd/mm/yyyy)</label><input
+                    type="text" id="jouryney_id"></div>
+            <div class="form-group">
+                <label for="visa_entry_id">No. of Entries</label>
+                <select id="visa_entry_id">
+                    <option value="1">SINGLE</option>
+                    <option value="4">TRIPLE</option>
+                    <option value="3">DOUBLE</option>
+                    <option value="2">MULTIPLE</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="entrypoint">Port of Arrival</label>
+                <select id="entrypoint">
+                    <option value="">Select entry point</option>
+                    <option value="BY AIR">BY AIR</option>
+                    <option value="BY AIR/ HARIDASPUR">BY AIR/ HARIDASPUR</option>
+                    <option value="BY RAIL CHITPUR">BY RAIL CHITPUR</option>
+                    <option value="BY RAIL GEDE">BY RAIL GEDE</option>
+                    <option value="BY RAIL GEDE/BY AIR">BY RAIL GEDE/BY AIR</option>
+                    <option value="BY RAIL GEDE/BYROAD HARIDASPUR">BY RAIL GEDE/BYROAD HARIDASPUR</option>
+                    <option value="BY RAIL NEW JALPAIGURI">BY RAIL NEW JALPAIGURI</option>
+                    <option value="BY RAIL NISCHINTPUR">BY RAIL NISCHINTPUR</option>
+                    <option value="BY RAIL PETRAPOLE">BY RAIL PETRAPOLE</option>
+                    <option value="BY ROAD AGARTALA">BY ROAD AGARTALA</option>
+                    <option value="BY ROAD BAGHMARA">BY ROAD BAGHMARA</option>
+                    <option value="BY ROAD BELONIA">BY ROAD BELONIA</option>
+                    <option value="BY ROAD BHOLAGONJ">BY ROAD BHOLAGONJ</option>
+                    <option value="BY ROAD CHANGRABANDHA">BY ROAD CHANGRABANDHA</option>
+                    <option value="BY ROAD CHANGRABANDHA/JAYGAON">BY ROAD CHANGRABANDHA/JAYGAON</option>
+                    <option value="BY ROAD CHANGRABANDHA/RANIGANJ">BY ROAD CHANGRABANDHA/RANIGANJ</option>
+                    <option value="BY ROAD DALU">BY ROAD DALU</option>
+                    <option value="BY ROAD DAWKI">BY ROAD DAWKI</option>
+                    <option value="BY ROAD DHALIGHAT">BY ROAD DHALIGHAT</option>
+                    <option value="BY ROAD DHUBRI">BY ROAD DHUBRI</option>
+                    <option value="BY ROAD GEDE">BY ROAD GEDE</option>
+                    <option value="BY ROAD GHOJADANGA">BY ROAD GHOJADANGA</option>
+                    <option value="BY ROAD GOLAKGANJ">BY ROAD GOLAKGANJ</option>
+                    <option value="BY ROAD HALDIBARI">BY ROAD HALDIBARI</option>
+                    <option value="BY ROAD HARIDASPUR">BY ROAD HARIDASPUR</option>
+                    <option value="BY ROAD HILI">BY ROAD HILI</option>
+                    <option value="BY ROAD JAIGAON">BY ROAD JAIGAON</option>
+                    <option value="BY ROAD JAIGAON/PHULBARI">BY ROAD JAIGAON/PHULBARI</option>
+                    <option value="BY ROAD KAILASHAHAR">BY ROAD KAILASHAHAR</option>
+                    <option value="BY ROAD KARIMGANJ">BY ROAD KARIMGANJ</option>
+                    <option value="BY ROAD KHOWAI">BY ROAD KHOWAI</option>
+                    <option value="BY ROAD LALGOLAGHAT">BY ROAD LALGOLAGHAT</option>
+                    <option value="BY ROAD MAHADIPUR">BY ROAD MAHADIPUR</option>
+                    <option value="BY ROAD MANKARCHAR">BY ROAD MANKARCHAR</option>
+                    <option value="BY ROAD MUHURIGHAT">BY ROAD MUHURIGHAT</option>
+                    <option value="BY ROAD PHULBARI">BY ROAD PHULBARI</option>
+                    <option value="BY ROAD PHULBARI/JAIGAON">BY ROAD PHULBARI/JAIGAON</option>
+                    <option value="BY ROAD PHULBARI/RANIGANJ">BY ROAD PHULBARI/RANIGANJ</option>
+                    <option value="BY ROAD RADHIKAPUR">BY ROAD RADHIKAPUR</option>
+                    <option value="BY ROAD RANIGANJ">BY ROAD RANIGANJ</option>
+                    <option value="BY ROAD RANIGANJ/PHULBARI">BY ROAD RANIGANJ/PHULBARI</option>
+                    <option value="BY ROAD SABROOM">BY ROAD SABROOM</option>
+                    <option value="BY ROAD SONAHAT">BY ROAD SONAHAT</option>
+                    <option value="BY ROAD SRIMANTPUR">BY ROAD SRIMANTPUR</option>
+                    <option value="BY ROAD SUTERKANDI">BY ROAD SUTERKANDI</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="exitpoint">Port of Exit</label>
+                <select id="exitpoint">
+                    <option value="">Select exit point</option>
+                    <option value="BY AIR">BY AIR</option>
+                    <option value="BY AIR/ HARIDASPUR">BY AIR/ HARIDASPUR</option>
+                    <option value="BY RAIL CHITPUR">BY RAIL CHITPUR</option>
+                    <option value="BY RAIL GEDE">BY RAIL GEDE</option>
+                    <option value="BY RAIL GEDE/BY AIR">BY RAIL GEDE/BY AIR</option>
+                    <option value="BY RAIL GEDE/BYROAD HARIDASPUR">BY RAIL GEDE/BYROAD HARIDASPUR</option>
+                    <option value="BY RAIL NEW JALPAIGURI">BY RAIL NEW JALPAIGURI</option>
+                    <option value="BY RAIL NISCHINTPUR">BY RAIL NISCHINTPUR</option>
+                    <option value="BY RAIL PETRAPOLE">BY RAIL PETRAPOLE</option>
+                    <option value="BY ROAD AGARTALA">BY ROAD AGARTALA</option>
+                    <option value="BY ROAD BAGHMARA">BY ROAD BAGHMARA</option>
+                    <option value="BY ROAD BELONIA">BY ROAD BELONIA</option>
+                    <option value="BY ROAD BHOLAGONJ">BY ROAD BHOLAGONJ</option>
+                    <option value="BY ROAD CHANGRABANDHA">BY ROAD CHANGRABANDHA</option>
+                    <option value="BY ROAD CHANGRABANDHA/JAYGAON">BY ROAD CHANGRABANDHA/JAYGAON</option>
+                    <option value="BY ROAD CHANGRABANDHA/RANIGANJ">BY ROAD CHANGRABANDHA/RANIGANJ</option>
+                    <option value="BY ROAD DALU">BY ROAD DALU</option>
+                    <option value="BY ROAD DAWKI">BY ROAD DAWKI</option>
+                    <option value="BY ROAD DHALIGHAT">BY ROAD DHALIGHAT</option>
+                    <option value="BY ROAD DHUBRI">BY ROAD DHUBRI</option>
+                    <option value="BY ROAD GEDE">BY ROAD GEDE</option>
+                    <option value="BY ROAD GHOJADANGA">BY ROAD GHOJADANGA</option>
+                    <option value="BY ROAD GOLAKGANJ">BY ROAD GOLAKGANJ</option>
+                    <option value="BY ROAD HALDIBARI">BY ROAD HALDIBARI</option>
+                    <option value="BY ROAD HARIDASPUR">BY ROAD HARIDASPUR</option>
+                    <option value="BY ROAD HILI">BY ROAD HILI</option>
+                    <option value="BY ROAD JAIGAON">BY ROAD JAIGAON</option>
+                    <option value="BY ROAD JAIGAON/PHULBARI">BY ROAD JAIGAON/PHULBARI</option>
+                    <option value="BY ROAD KAILASHAHAR">BY ROAD KAILASHAHAR</option>
+                    <option value="BY ROAD KARIMGANJ">BY ROAD KARIMGANJ</option>
+                    <option value="BY ROAD KHOWAI">BY ROAD KHOWAI</option>
+                    <option value="BY ROAD LALGOLAGHAT">BY ROAD LALGOLAGHAT</option>
+                    <option value="BY ROAD MAHADIPUR">BY ROAD MAHADIPUR</option>
+                    <option value="BY ROAD MANKARCHAR">BY ROAD MANKARCHAR</option>
+                    <option value="BY ROAD MUHURIGHAT">BY ROAD MUHURIGHAT</option>
+                    <option value="BY ROAD PHULBARI">BY ROAD PHULBARI</option>
+                    <option value="BY ROAD PHULBARI/JAIGAON">BY ROAD PHULBARI/JAIGAON</option>
+                    <option value="BY ROAD PHULBARI/RANIGANJ">BY ROAD PHULBARI/RANIGANJ</option>
+                    <option value="BY ROAD RADHIKAPUR">BY ROAD RADHIKAPUR</option>
+                    <option value="BY ROAD RANIGANJ">BY ROAD RANIGANJ</option>
+                    <option value="BY ROAD RANIGANJ/PHULBARI">BY ROAD RANIGANJ/PHULBARI</option>
+                    <option value="BY ROAD SABROOM">BY ROAD SABROOM</option>
+                    <option value="BY ROAD SONAHAT">BY ROAD SONAHAT</option>
+                    <option value="BY ROAD SRIMANTPUR">BY ROAD SRIMANTPUR</option>
+                    <option value="BY ROAD SUTERKANDI">BY ROAD SUTERKANDI</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="visa_serreq_id_112">Places to be Visited</label>
+                <input type="text" id="visa_serreq_id_112" placeholder="e.g. KOLKATA, SIKKIM, DARJEELING">
+            </div>
         </div>
 
         <h2>Previous Visit Details</h2>
         <div class="form-grid">
-            <div class="form-group"><label>Previous Stay Address</label><input type="text" id="prv_visit_add1"></div>
-            <div class="form-group"><label>Cities Visited</label><input type="text" id="visited_city"></div>
-            <div class="form-group"><label>Previous Visa No.</label><input type="text" id="old_visa_no"></div>
-            <div class="form-group"><label>Previous Visa Type ID</label><input type="text" id="old_visa_type_id"></div>
-            <div class="form-group"><label>Previous Visa Place of Issue</label><input type="text" id="oldvisaissueplace"></div>
-            <div class="form-group"><label>Previous Visa Issue Date</label><input type="text" id="oldvisaissuedateRaw"></div>
-            <div class="form-group"><label>Countries Visited (Last 10yrs)</label><input type="text" id="country_visited"></div>
+            <div class="form-group"><label for="prv_visit_add1">Previous Stay Address</label><input type="text"
+                    id="prv_visit_add1"></div>
+            <div class="form-group"><label for="visited_city">Cities Visited</label><input type="text"
+                    id="visited_city"></div>
+            <div class="form-group"><label for="old_visa_no">Previous Visa No.</label><input type="text"
+                    id="old_visa_no"></div>
+            <div class="form-group">
+                <label for="old_visa_type_id">Previous Visa Type ID</label>
+                <select id="old_visa_type_id">
+                    <option value="">Select visa type</option>
+                    <option value="1">BUSINESS VISA</option>
+                    <option value="4">CONFERENCE VISA</option>
+                    <option value="11">DIPLOMATIC VISA</option>
+                    <option value="87">DOUBLE ENTRY</option>
+                    <option value="9">EMPLOYMENT VISA</option>
+                    <option value="6">ENTRY VISA</option>
+                    <option value="84">FILM VISA</option>
+                    <option value="8">JOURNALIST VISA</option>
+                    <option value="16">MEDICAL VISA</option>
+                    <option value="7">MISSIONARY VISA</option>
+                    <option value="63">MOUNTAINEERING VISA</option>
+                    <option value="12">OFFICIAL VISA</option>
+                    <option value="64">PILGRIMES VISA</option>
+                    <option value="2">STUDENT VISA</option>
+                    <option value="3">TOURIST VISA</option>
+                    <option value="5">TRANSIT VISA</option>
+                    <option value="86">UN DIPLOMAT</option>
+                    <option value="17">UN OFFICIAL</option>
+                    <option value="76">VISIT VISA</option>
+                </select>
+            </div>
+            <div class="form-group"><label for="oldvisaissueplace">Previous Visa Place of Issue</label><input
+                    type="text" id="oldvisaissueplace"></div>
+            <div class="form-group"><label for="oldvisaissuedateRaw">Previous Visa Issue Date (Raw)</label><input
+                    type="text" id="oldvisaissuedateRaw"></div>
+            <div class="form-group"><label for="refuse_flag2">Previously Refused/Deported? (YES/NO)</label><input
+                    type="text" id="refuse_flag2"></div>
+            <div class="form-group"><label for="country_visited">Countries Visited (Last 10yrs)</label><input
+                    type="text" id="country_visited"></div>
         </div>
 
-        <div class="footer-bar">
-            <div class="button-bar">
-                <span id="statusTextBottom" class="status-success"></span>
-                <button id="saveButtonBottom" class="btn btn-save">💾 Save Changes</button>
+        <h2>
+            Reference Details (India)
+            <span class="green-light-badge" id="badge-ref-ind"><span class="dot"></span><span class="badge-text">Empty</span></span>
+        </h2>
+        <div class="form-grid">
+            <div class="form-group"><label for="nameofsponsor_ind">Reference / Hotel Name in India*</label><input type="text" id="nameofsponsor_ind" placeholder="e.g. VISHAL HOTEL"></div>
+            <div class="form-group"><label for="add1ofsponsor_ind">Address Line 1*</label><input type="text" id="add1ofsponsor_ind" placeholder="e.g. 1576 MAIN BAZAR ROAD, PAHARGANJ"></div>
+            <div class="form-group"><label for="add2ofsponsor_ind">Address Line 2</label><input type="text" id="add2ofsponsor_ind" placeholder="e.g. NEW DELHI 110021"></div>
+            <div class="form-group">
+                <label for="stateofsponsor_ind">State in India*</label>
+                <select id="stateofsponsor_ind">
+                    <option value="">Select State</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="districtofsponsor_ind">District in India*</label>
+                <select id="districtofsponsor_ind">
+                    <option value="">Select District</option>
+                </select>
+            </div>
+            <div class="form-group"><label for="phoneofsponsor_ind">Phone Number in India*</label><input type="text" id="phoneofsponsor_ind" placeholder="e.g. 919560640328"></div>
+        </div>
+
+        <h2>
+            <div class="section-title-group">
+                <span>Reference Details (BANGLADESH)</span>
+                <div class="quick-ref-wrapper">
+                    <select id="quickRefSelector" class="quick-ref-select" title="Switch BD Reference Source">
+                        <option value="original">Original From BGD/Passport</option>
+                        <option value="spouse" id="opt-ref-spouse">Spouse</option>
+                        <option value="father" id="opt-ref-father">Father</option>
+                        <option value="mother" id="opt-ref-mother">Mother</option>
+                    </select>
+                </div>
+            </div>
+            <span class="green-light-badge" id="badge-ref-msn"><span class="dot"></span><span class="badge-text">Empty</span></span>
+        </h2>
+        <div class="form-grid">
+            <div class="form-group"><label for="nameofsponsor_msn">Reference / Contact Name in BD*</label><input type="text" id="nameofsponsor_msn" placeholder="e.g. RASHEDUZ ZAMAN"></div>
+            <div class="form-group"><label for="add1ofsponsor_msn">Address Line 1*</label><input type="text" id="add1ofsponsor_msn" placeholder="e.g. HOUSE- 17, ROAD- 22, BLOCK- Z"></div>
+            <div class="form-group"><label for="add2ofsponsor_msn">Address Line 2</label><input type="text" id="add2ofsponsor_msn" placeholder="e.g. BANASREE, RAMPURA, DHAKA"></div>
+            <div class="form-group"><label for="phoneofsponsor_msn">Phone Number in BD*</label><input type="text" id="phoneofsponsor_msn" placeholder="e.g. 01800000000"></div>
+        </div>
+
+        <div class="button-bar">
+            <span class="status"></span>
+            <button class="saveButton">Save Changes</button>
+        </div>
+    <!-- Interactive Crop Modal -->
+    <div id="cropModal" class="modal-backdrop hidden">
+        <div class="crop-modal-content">
+            <div class="crop-modal-header">
+                <h3>Crop Photo (200 x 200)</h3>
+                <button type="button" id="closeCropModal" class="close-btn">&times;</button>
+            </div>
+            <div class="crop-modal-body">
+                <div class="crop-canvas-wrapper" id="cropCanvasWrapper">
+                    <canvas id="cropCanvas" width="250" height="250"></canvas>
+                    <div class="crop-grid-overlay"></div>
+                </div>
+                <div class="crop-controls">
+                    <label>Zoom <input type="range" id="cropZoom" min="0.5" max="3" step="0.05" value="1"></label>
+                    <span class="crop-hint">Drag image inside box to adjust position</span>
+                </div>
+            </div>
+            <div class="crop-modal-footer">
+                <button type="button" id="btnCancelCrop" class="photo-btn secondary" style="width: auto;">Cancel</button>
+                <button type="button" id="btnApplyCrop" class="photo-btn primary" style="width: auto;">Apply Crop</button>
             </div>
         </div>
     </div>
-    <script src="lib/firebase-app-compat.js"></script>
+
+        <script src="lib/firebase-app-compat.js"></script>
     <script src="lib/firebase-auth-compat.js"></script>
     <script src="lib/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
     <script type="module" src="editor.js"></script>
 </body>
+
 </html>
