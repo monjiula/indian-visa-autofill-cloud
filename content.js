@@ -627,7 +627,8 @@ async function ge(t, n, o = !1, i = "captcha") {
     const cData = resp.data;
     const cText = (cData && cData.captchaText) || (cData && cData.data && cData.data.captchaText) || resp.captchaText || (typeof resp.data === "string" ? resp.data : "") || "";
     if (cText) {
-      const cleaned = String(cText).trim().replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+      // Strictly preserve original casing (case-sensitive captcha)
+      const cleaned = String(cText).trim().replace(/[^a-zA-Z0-9]/g, "");
       const lower = cleaned.toLowerCase();
       if (/^[A-Za-z0-9]{4,8}$/.test(cleaned) && "refresh" !== lower && "captcha" !== lower) {
         n.value = cleaned;

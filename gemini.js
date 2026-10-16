@@ -462,7 +462,7 @@ export async function solveCaptcha(base64Data, mimeType = "image/png") {
     contents: [{
       parts: [
         { inlineData: { mimeType: mimeType || "image/png", data: cleanBase64 } },
-        { text: "This is a captcha image from the Indian Visa Application Portal. Read the alphanumeric characters in the image. Output ONLY the exact captcha text in uppercase letters and numbers, with NO other words, spaces, or markdown." }
+        { text: "This is a captcha image from the Indian Visa Application Portal. The captcha is strictly CASE-SENSITIVE and contains mixed uppercase letters, lowercase letters, and digits. Read the characters with their EXACT letter casing. Do NOT convert everything to uppercase. Pay special attention to distinguishing between lowercase and uppercase letters (e.g., c vs C, s vs S, o vs O, p vs P, v vs V, w vs W, x vs X, z vs Z, k vs K). Output ONLY the exact characters with their original case, with NO other words, spaces, or markdown." }
       ]
     }],
     generationConfig: {
