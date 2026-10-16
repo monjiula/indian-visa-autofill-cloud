@@ -1,11 +1,18 @@
 function extractVisaDetailsFromText(text) {
   if (!text) return {};
   const res = {};
-  const exitMatch = text.match(/Port\s*of\s*Exit\s+([A-Za-z0-9\/\(\)\s\-]+?)(?=\s*(?:Required|Application|Places|Purpose|F\.|Previous|$))/i);
+  const exitMatch = text.match(/Port\s*of\s*Exit\s+([A-Za-z0-9\/\(\)\s\-]+?)(?=\s*(?:Port\s*Of\s*Arrival|Required|Application|Places|Purpose|F\.|Previous|$))/i);
   if (exitMatch) res.exitpoint = exitMatch[1].trim().replace(/\s+/g, ' ');
 
-  const entryMatch = text.match(/Port\s*Of\s*Arrival\s+([A-Za-z0-9\/\(\)\s\-]+?)(?=\s*Port\s*of\s*Exit)/i);
-  if (entryMatch) res.entrypoint = entryMatch[1].trim().replace(/\s+/g, ' ');
+  const entryMatch = text.match(/Port\s*Of\s*Arrival\s+([A-Za-z0-9\/\(\)\s\-]+?)(?=\s*(?:Port\s*of\s*Exit|Required|Application|Places|$))/i);
+  if (entryMatch) {
+    const val = entryMatch[1].trim().replace(/\s+/g, ' ');
+    if (!val.toUpperCase().includes('REQUIRED') && !val.toUpperCase().includes('DETAIL')) {
+      res.entrypoint = val;
+    }
+  }
+  if (!res.entrypoint && res.exitpoint) res.entrypoint = res.exitpoint;
+  if (!res.exitpoint && res.entrypoint) res.exitpoint = res.entrypoint;
 
   const entriesMatch = text.match(/No\s*of\s*Entries\s+([A-Za-z]+)/i);
   if (entriesMatch) {
@@ -25,6 +32,80 @@ function extractVisaDetailsFromText(text) {
 
   const placesMatch = text.match(/Places\s*to\s*be\s*Visited\s+([A-Za-z0-9\s,]+?)(?=\s*\"\"|\s*Purpose|\s*NA)/i);
   if (placesMatch) res.places_to_visit = placesMatch[1].trim();
+
+  // Country & Town of birth from Section A
+  const pobCountryMatch = text.match(/Country\s*of\s*Birth\s+([A-Za-z\s]+?)(?=\s*(?:Citizenship|National|Religion|Educational|$))/i);
+  if (pobCountryMatch) res.pobCountry = pobCountryMatch[1].trim().toUpperCase();
+
+  const pobTownMatch = text.match(/Place\s*of\s*Birth\s*Town\/City\s+([A-Za-z0-9\s\-]+?)(?=\s*(?:Country|Citizenship|$))/i);
+  if (pobTownMatch) res.pobTown = pobTownMatch[1].trim().toUpperCase();
+
+  // Contact & Address Details from Section C
+  const emailMatch = text.match(/Email\s*(?:address|id)?\s*:?\s*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/i);
+  if (emailMatch) res.email_id = emailMatch[1].trim();
+
+  const phoneMatch = text.match(/Phone\s*No\s+([0-9]+)/i);
+  if (phoneMatch) res.pres_phone = phoneMatch[1].trim();
+
+  const mobileMatch = text.match(/Mobile\s*\/Cell\s*No\s+([0-9]+)/i);
+  if (mobileMatch) res.mobile = mobileMatch[1].trim();
+
+  const pinMatch = text.match(/BANGLADESH\s+(\d{4,6})/i);
+  if (pinMatch) res.pincode = pinMatch[1].trim();
+
+  const cSec = text.match(/C\.\s*Applicant['’]s\s*Contact\s*Details([\s\S]*?)(?=D\.\s*Family\s*Details|$)/i);
+  if (cSec) {
+    const cText = cSec[1];
+    const presMatch = cText.match(/Present\s+([\s\S]+?)(?=\s*Phone\s*No)/i);
+    if (presMatch) res.pres_add1 = presMatch[1].trim().replace(/\s+/g, ' ');
+
+    const addrMatch = cText.match(/Address\s+([\s\S]+?)(?=\s*Mobile\s*\/Cell\s*No)/i);
+    if (addrMatch) res.pres_add2 = addrMatch[1].trim().replace(/\s+/g, ' ');
+
+    const cityMatch = cText.match(/Mobile\s*\/Cell\s*No\s+[0-9]+\s+([A-Za-z0-9\s,\-]+?),\s*BANGLADESH\s+(\d{4,6})/i);
+    if (cityMatch) res.pres_add3 = cityMatch[1].trim();
+
+    const permMatch = cText.match(/Permanent\s+([\s\S]+?)(?=\s*Address)/i);
+    if (permMatch) res.perm_address1 = permMatch[1].trim().replace(/\s+/g, ' ');
+  }
+
+  // Section D Family regex:
+  const fatherMatch = text.match(/Father['’]s\s+([A-Za-z\s\.\-]+?)(?=\s+BANGLADESH|\s+INDIAN|\s+PAKISTAN)/i);
+  if (fatherMatch) res.fthrname = fatherMatch[1].trim();
+
+  const motherMatch = text.match(/Mother['’]s\s+([A-Za-z\s\.\-]+?)(?=\s+BANGLADESH|\s+INDIAN|\s+PAKISTAN)/i);
+  if (motherMatch) res.mother_name = motherMatch[1].trim();
+
+  const spouseMatch = text.match(/Spouse\s+([A-Za-z\s\.\-]+?)(?=\s+BANGLADESH|\s+INDIAN|\s+PAKISTAN)/i);
+  if (spouseMatch) res.spouse_name = spouseMatch[1].trim();
+
+  // Section E Occupation regex:
+  const occMatch = text.match(/Present\s*Occupation\s+([A-Za-z\s]+?)(?=\s*Designation|Employer|$)/i);
+  if (occMatch) res.occupation = occMatch[1].trim();
+
+  const desMatch = text.match(/Designation\s*\/Rank\s+([A-Za-z0-9\s]+?)(?=\s*Employer|$)/i);
+  if (desMatch) res.empdesignation = desMatch[1].trim();
+
+  const empMatch = text.match(/Employer\s*name\/business\s+([A-Za-z0-9\s\.\-]+?)(?=\s*Employer\s*Address|$)/i);
+  if (empMatch) res.empname = empMatch[1].trim();
+
+  const addMatch = text.match(/Employer\s*Address\s*Phone\s*Number\s+([A-Za-z0-9\s,\.\-]+?)\s+([0-9]{5,})/i);
+  if (addMatch) {
+    res.empaddress = addMatch[1].trim();
+    res.empphone = addMatch[2].trim();
+  }
+
+  res.pres_country = "BANGLADESH";
+  res.perm_country = "BANGLADESH";
+  res.isd_code1 = "880";
+  res.nationality = "BANGLADESH";
+  res.nationality_by = "BY BIRTH";
+  res.father_nationality = "BANGLADESH";
+  res.mother_nationality = "BANGLADESH";
+  res.father_country_of_birth = "BANGLADESH";
+  res.mother_country_of_birth = "BANGLADESH";
+  res.spouse_nationality = "BANGLADESH";
+  res.spouse_country_of_birth = "BANGLADESH";
 
   return res;
 }
@@ -470,12 +551,11 @@ async function processSingleFile(file, mode, apiKey) {
     if (fullText.trim().length > 0) {
       extracted = await extractFromBGDText(apiKey, fullText);
       const vDetails = extractVisaDetailsFromText(fullText);
-      if (vDetails.exitpoint && (!extracted.exitpoint || extracted.exitpoint === "NILL")) extracted.exitpoint = vDetails.exitpoint;
-      if (vDetails.entrypoint && (!extracted.entrypoint || extracted.entrypoint === "NILL")) extracted.entrypoint = vDetails.entrypoint;
-      if (vDetails.visa_entry_id && (!extracted.visa_entry_id || extracted.visa_entry_id === "NILL")) extracted.visa_entry_id = vDetails.visa_entry_id;
-      if (vDetails.duration && (!extracted.duration || extracted.duration === "NILL")) extracted.duration = vDetails.duration;
-      if (vDetails.jouryney_id && (!extracted.jouryney_id || extracted.jouryney_id === "NILL")) extracted.jouryney_id = vDetails.jouryney_id;
-      if (vDetails.places_to_visit && (!extracted.places_to_visit || extracted.places_to_visit === "NILL")) extracted.places_to_visit = vDetails.places_to_visit;
+      for (const k in vDetails) {
+        if (vDetails[k] && (!extracted[k] || extracted[k] === "NILL" || extracted[k] === "")) {
+          extracted[k] = vDetails[k];
+        }
+      }
       if (!extracted.exitpoint && extracted.entrypoint) extracted.exitpoint = extracted.entrypoint;
       // Dual reference coordinate enhancement
       if (Array.isArray(coordItems) && coordItems.length > 0) {

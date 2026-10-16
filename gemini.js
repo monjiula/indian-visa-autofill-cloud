@@ -47,11 +47,16 @@ const VISA_FIELDS_SCHEMA = {
     fthrname:             { type: "string" },
     father_nationality:   { type: "string" },
     father_place_of_birth:{ type: "string" },
+    father_country_of_birth: { type: "string" },
     mother_name:          { type: "string" },
+    mother_nationality:   { type: "string" },
     mother_place_of_birth:{ type: "string" },
+    mother_country_of_birth: { type: "string" },
     marital_status:       { type: "string" },
     spouse_name:          { type: "string" },
+    spouse_nationality:   { type: "string" },
     spouse_place_of_birth:{ type: "string" },
+    spouse_country_of_birth: { type: "string" },
     occupation:           { type: "string" },
     empname:              { type: "string" },
     empdesignation:       { type: "string" },
@@ -107,11 +112,37 @@ Return ONLY valid JSON matching the required schema. No explanations, no markdow
 const BGD_PROMPT = `Extract ALL applicant details from this extracted Indian Visa Application text (previously filled application).
 
 Carefully extract the following and map to the JSON schema:
-- Personal info: Name (split Surname/Given Name), DOB, Gender, Religion, Education, Nationality, Citizenship/NID.
+- Personal info: Name (split Surname/Given Name), DOB, Gender, Religion, Education, Nationality (default "BANGLADESH"), Citizenship/NID, pobTown (Place of Birth Town/City), pobCountry (Country of Birth, default "BANGLADESH"), nationality_by (e.g. "BY BIRTH").
 - Passport details: Number, Issue Date, Expiry Date, Place of Issue.
-- Address: Present and Permanent addresses (Add1, Add2, City, Country, Pincode). Phone numbers.
-- Family: Father, Mother, Spouse (Names, Nationality, Place of birth).
-- Employment: Occupation, Employer Name, Designation, Address.
+- Address: Present and Permanent addresses:
+  * pres_add1: House/Street
+  * pres_add2: Village/Town/City
+  * pres_add3: State/Province/District
+  * pres_country: Country (default "BANGLADESH")
+  * pincode: Postal/Zip Code (e.g. 6340)
+  * pres_phone: Phone number
+  * mobile: Mobile / Cell number
+  * isd_code1: ISD code (default "880")
+  * email_id: Email address
+  * perm_address1: Permanent House/Street
+  * perm_address2: Permanent Village/Town/City
+  * perm_address3: Permanent State/Province/District
+  * perm_country: Permanent Country (default "BANGLADESH")
+- Family: 
+  * fthrname: Father's Name
+  * father_nationality: Father's Nationality (default "BANGLADESH")
+  * father_place_of_birth: Father's Place of Birth
+  * father_country_of_birth: Father's Country of Birth (default "BANGLADESH")
+  * mother_name: Mother's Name
+  * mother_nationality: Mother's Nationality (default "BANGLADESH")
+  * mother_place_of_birth: Mother's Place of Birth
+  * mother_country_of_birth: Mother's Country of Birth (default "BANGLADESH")
+  * marital_status: "0" (Married), "1" (Single)
+  * spouse_name: Spouse's Name
+  * spouse_nationality: Spouse's Nationality (default "BANGLADESH")
+  * spouse_place_of_birth: Spouse's Place of Birth
+  * spouse_country_of_birth: Spouse's Country of Birth (default "BANGLADESH")
+- Employment: Occupation, Employer Name, Designation, Address, Phone.
 - Previous visa history: Visa number, Type, Issue place/date, Cities visited, Previous stay address.
 - Port of arrival/exit: (entrypoint, exitpoint).
 
@@ -247,6 +278,23 @@ function postProcessData(data) {
     clean.pres_add1 = clean.perm_address1;
     clean.pres_add2 = clean.perm_address2;
     clean.pres_add3 = clean.perm_address3;
+  }
+
+  // 6. Country, nationality, and family defaults for Bangladesh applications
+  if (!clean.pres_country || clean.pres_country === 'NILL') clean.pres_country = 'BANGLADESH';
+  if (!clean.perm_country || clean.perm_country === 'NILL') clean.perm_country = 'BANGLADESH';
+  if (!clean.pobCountry || clean.pobCountry === 'NILL') clean.pobCountry = 'BANGLADESH';
+  if (!clean.nationality || clean.nationality === 'NILL') clean.nationality = 'BANGLADESH';
+  if (!clean.nationality_by || clean.nationality_by === 'NILL') clean.nationality_by = 'BY BIRTH';
+  if (!clean.father_nationality || clean.father_nationality === 'NILL') clean.father_nationality = 'BANGLADESH';
+  if (!clean.father_country_of_birth || clean.father_country_of_birth === 'NILL') clean.father_country_of_birth = 'BANGLADESH';
+  if (!clean.mother_nationality || clean.mother_nationality === 'NILL') clean.mother_nationality = 'BANGLADESH';
+  if (!clean.mother_country_of_birth || clean.mother_country_of_birth === 'NILL') clean.mother_country_of_birth = 'BANGLADESH';
+  if (!clean.isd_code1 || clean.isd_code1 === 'NILL') clean.isd_code1 = '880';
+
+  if (clean.marital_status === '0' || String(clean.marital_status).toUpperCase() === 'MARRIED') {
+    if (!clean.spouse_nationality || clean.spouse_nationality === 'NILL') clean.spouse_nationality = 'BANGLADESH';
+    if (!clean.spouse_country_of_birth || clean.spouse_country_of_birth === 'NILL') clean.spouse_country_of_birth = 'BANGLADESH';
   }
 
   return clean;

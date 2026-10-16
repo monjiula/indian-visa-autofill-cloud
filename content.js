@@ -1,12 +1,35 @@
-console.log("IV Autofill: content.js script has been loaded."); function e(e, t) { if (t && "NILL" !== t) { const n = "string" == typeof e ? document.getElementById(e) : e; n && (console.log(`- Filling Text Field #${n.id || n.name || "field"} with value: ${t}`), n.value = t, n.dispatchEvent(new Event("input", { bubbles: !0 })), n.dispatchEvent(new Event("change", { bubbles: !0 })), n.dispatchEvent(new Event("blur", { bubbles: !0 }))) } } function t(e, t) {
-  if (null == t || "NILL" === t) return;
-  const n = "string" == typeof e ? document.getElementById(e) : e;
+console.log("IV Autofill: content.js script has been loaded.");
+
+function e(e_el, t_val) {
+  if (t_val != null && "NILL" !== t_val) {
+    const n = "string" == typeof e_el ? (document.getElementById(e_el) || document.querySelector(`[name="${e_el}"]`) || document.querySelector(`[id$="${e_el}"]`) || document.querySelector(`[name$=".${e_el}"]`)) : e_el;
+    if (!n) return;
+    if (n.tagName === "SELECT" || n.options) {
+      return t(n, t_val);
+    }
+    console.log(`- Filling Text Field #${n.id || n.name || "field"} with value: ${t_val}`);
+    n.value = t_val;
+    n.dispatchEvent(new Event("input", { bubbles: !0 }));
+    n.dispatchEvent(new Event("change", { bubbles: !0 }));
+    n.dispatchEvent(new Event("blur", { bubbles: !0 }));
+  }
+}
+
+function t(e_el, t_val) {
+  if (null == t_val || "NILL" === t_val) return;
+  const n = "string" == typeof e_el ? (document.getElementById(e_el) || document.querySelector(`[name="${e_el}"]`) || document.querySelector(`[id$="${e_el}"]`) || document.querySelector(`[name$=".${e_el}"]`)) : e_el;
   if (!n || !n.options) return;
   let o = !1;
-  const target = String(t).trim().toUpperCase();
+  const target = String(t_val).trim().toUpperCase();
   let alias = "";
   if (target === "BANGLADESH" || target === "BGD") alias = (target === "BANGLADESH") ? "BGD" : "BANGLADESH";
   else if (target === "INDIA" || target === "IND") alias = (target === "INDIA") ? "IND" : "INDIA";
+  else if (target === "MALE" || target === "M") alias = (target === "MALE") ? "M" : "MALE";
+  else if (target === "FEMALE" || target === "F") alias = (target === "FEMALE") ? "F" : "FEMALE";
+  else if (target === "MARRIED" || target === "0") alias = (target === "MARRIED") ? "0" : "MARRIED";
+  else if (target === "SINGLE" || target === "1") alias = (target === "SINGLE") ? "1" : "SINGLE";
+  else if (target === "BY BIRTH" || target === "0") alias = (target === "BY BIRTH") ? "0" : "BY BIRTH";
+  else if (target === "NATURALIZATION" || target === "1") alias = (target === "NATURALIZATION") ? "1" : "NATURALIZATION";
 
   for (const opt of n.options) {
     const val = String(opt.value || "").trim().toUpperCase();
@@ -29,11 +52,56 @@ console.log("IV Autofill: content.js script has been loaded."); function e(e, t)
       }
     }
   }
+  if (!o && target.length >= 4) {
+    for (const opt of n.options) {
+      const txt = String(opt.text || "").trim().toUpperCase();
+      if (txt && (target.includes(txt) || txt.includes(target))) {
+        n.value = opt.value;
+        o = !0;
+        break;
+      }
+    }
+  }
   if (o) {
-    console.log(`- Setting Dropdown #${n.id || n.name || "select"} to: ${t} (value=${n.value})`);
+    console.log(`- Setting Dropdown #${n.id || n.name || "select"} to: ${t_val} (value=${n.value})`);
+    n.dispatchEvent(new Event("input", { bubbles: !0 }));
     n.dispatchEvent(new Event("change", { bubbles: !0 }));
+    if (n.id) {
+      h(n.id, n.value);
+    }
   } else {
-    console.warn(`   -> Could not find option "${t}" in dropdown #${n.id || "select"}`);
+    console.warn(`   -> Could not find option "${t_val}" in dropdown #${n.id || n.name || "select"}`);
+  }
+}
+
+function setField(ids, val, defaultVal = "") {
+  let finalVal = (val != null && String(val).trim() !== "" && String(val).trim().toUpperCase() !== "NILL") 
+    ? String(val).trim() 
+    : defaultVal;
+  if (!finalVal) return;
+  const idList = Array.isArray(ids) ? ids : [ids];
+  let el = null;
+  for (const id of idList) {
+    if (typeof id !== "string") { el = id; break; }
+    el = document.getElementById(id) || 
+         document.querySelector(`[name="${id}"]`) || 
+         document.querySelector(`[name$=".${id}"]`) || 
+         document.querySelector(`[id$="${id}"]`);
+    if (el) break;
+  }
+  if (!el) return;
+  if (el.tagName === "SELECT" || el.options) {
+    t(el, finalVal);
+  } else if (el.type === "checkbox") {
+    const isTrue = finalVal === true || ["YES", "TRUE", "1", "Y"].includes(String(finalVal).toUpperCase());
+    if (isTrue && !el.checked) {
+      el.click();
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  } else if (el.type === "radio") {
+    o(el.name || idList[0], finalVal);
+  } else {
+    e(el, finalVal);
   }
 } async function n(e, t, maxRetries = 5, retryInterval = 800) {
   if (null == t || "NILL" === t) return !1;
@@ -346,7 +414,119 @@ console.log("IV Autofill: content.js script has been loaded."); function e(e, t)
     document.getElementById("btn-med-att").onclick = () => submitForm("546");
     document.getElementById("btn-other").onclick = () => submitForm(null);
   })(o);
-} function d(e) { if (!e || "string" != typeof e) return !1; const t = e.trim(); if (!t || ["NILL", "NA", "UNKNOWN", "NULL", "DD/MM/YYYY"].includes(t.toUpperCase())) return !1; let n, o, i; const a = t.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/); if (a) n = parseInt(a[1], 10), o = parseInt(a[2], 10) - 1, i = parseInt(a[3], 10); else { const e = t.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/); if (e) i = parseInt(e[1], 10), o = parseInt(e[2], 10) - 1, n = parseInt(e[3], 10); else { const e = new Date(t); if (isNaN(e.getTime())) return !1; n = e.getDate(), o = e.getMonth(), i = e.getFullYear() } } const s = new Date(i, o, n, 23, 59, 59); if (isNaN(s.getTime())) return !1; const l = new Date; return s < new Date(l.getFullYear(), l.getMonth() + 6, l.getDate(), 0, 0, 0) } function c(e) { const t = function () { let e = document.getElementById("passport_expiry_date") || document.getElementById("passport_exp_date") || document.getElementById("exp_date_id") || document.getElementById("exp_date") || document.getElementById("passexpdate") || document.querySelector('input[name="passport_expiry_date"]') || document.querySelector('input[name*="passport_expiry" i]') || document.querySelector('input[name*="passexp" i]') || document.querySelector('input[name*="exp_date" i]') || document.querySelector('input[name*="expiry" i]'); if (!e) { const t = Array.from(document.querySelectorAll("td, th, label, div, span, p")).find(e => { const t = (e.textContent || "").trim(); return /Date\s*of\s*Expiry/i.test(t) }); if (t) { const n = t.closest("tr") || t.closest(".form-group") || t.parentElement; n && (e = n.querySelector('input[type="text"], input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"])')) } } return e }(); if (!t) return; const n = d(null != e ? String(e) : t.value), o = "iv-expiry-callout-warning", i = "iv-expiry-arrow-overlay"; let a = document.getElementById(o), s = document.getElementById(i); if (n) { t.style.setProperty("background-color", "#dc2626", "important"), t.style.setProperty("color", "#ffffff", "important"), t.style.setProperty("font-weight", "bold", "important"), t.style.setProperty("border", "2px solid #b91c1c", "important"), a || (a = document.createElement("div"), a.id = o, a.style.cssText = "\n                position: fixed;\n                right: 25px;\n                width: 220px;\n                background: #dc2626;\n                border: 3.5px solid #facc15;\n                border-radius: 14px;\n                padding: 12px 16px;\n                color: #ffffff;\n                font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;\n                font-size: 13px;\n                font-weight: 700;\n                line-height: 1.45;\n                text-align: left;\n                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);\n                z-index: 2147483640;\n                pointer-events: none;\n                transition: top 0.15s ease-out;\n            ", a.innerHTML = "Passport expiry date is less then 6 month, it will be rejected. Renew the passport then apply", document.body.appendChild(a)), s || (s = document.createElementNS("http://www.w3.org/2000/svg", "svg"), s.id = i, s.style.cssText = "\n                position: fixed;\n                top: 0;\n                left: 0;\n                width: 100vw;\n                height: 100vh;\n                pointer-events: none;\n                z-index: 2147483639;\n            ", document.body.appendChild(s)); const e = () => { if (!a || !document.body.contains(a)) return; const e = t.getBoundingClientRect(); if (0 === e.width && 0 === e.height) return; const n = Math.max(70, Math.min(window.innerHeight - 160, e.top - 10)); a.style.top = `${n}px`; const o = a.getBoundingClientRect(), i = e.right + 2, l = e.top + e.height / 2, r = o.left, d = o.top + o.height / 2; s.innerHTML = `\n                <line x1="${i + 9}" y1="${l}" x2="${r}" y2="${d}" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round" />\n                <polygon points="${i},${l} ${i + 9 + 2},${l - 5.5} ${i + 9 + 2},${l + 5.5}" fill="#dc2626" />\n            ` }; e(), t._ivExpiryBound || (t._ivExpiryBound = !0, window.addEventListener("scroll", e, { passive: !0 }), window.addEventListener("resize", e, { passive: !0 }), t.addEventListener("input", () => c()), t.addEventListener("change", () => c()), t.addEventListener("keyup", () => c()), t.addEventListener("paste", () => setTimeout(c, 50))) } else t.style.removeProperty("background-color"), t.style.removeProperty("color"), t.style.removeProperty("font-weight"), t.style.removeProperty("border"), a && a.remove(), s && s.remove() } function p() { c(); let e = 0; const t = setInterval(() => { c(), e++, e > 25 && clearInterval(t) }, 400) } function u(e) { for (let e = 1; e <= 6; e++)o(`radioName[${e}]`, "NO"); !function (e) { const t = document.getElementById(e); t && !t.checked && (console.log(`- Clicking Checkbox #${e}`), t.click()) }("verifyQuestions") } function m(n) { console.log("IV Autofill: Running the autofill router..."), document.getElementById("surname") ? function (t) { console.log("IV Autofill: Detected Page 1."), e("surname", t.surname), e("givenName", t.givenName), e("birth_place", t.pobTown), e("nic_number", t.citizenId), e("identity_marks", "NA"), e("passport_no", t.passNo), e("passport_issue_place", t.passPlace), e("passport_issue_date", t.passDate), e("passport_expiry_date", t.passExpire), p(), o("appl.oth_ppt", "NO"); const n = document.querySelector('input[name="othPassYN"][value="N"]'); n && n.click(), e("gender", t.gender), e("country_birth", t.pobCountry), e("religion", t.religion), e("education", t.education), e("nationality", t.nationality), e("nationality_by", t.nationality) }(n) : document.getElementById("pres_add1") ? function (n) { if (e("pres_add1", n.pres_add1), e("pres_add2", n.pres_add2), e("pres_country", n.pres_country), e("pres_add3", n.pres_add3), e("pincode", n.pincode), e("pres_phone", n.pres_phone.slice(-11)), e("isd_code1", n.isd_code1), e("mobile", n.pres_phone.slice(-10)), e("perm_address1", n.perm_address1), e("perm_address2", n.perm_address2), e("perm_address3", n.perm_address3), e("fthrname", n.fthrname), e("father_nationality", n.father_nationality), e("father_previous_nationality", n.father_nationality), e("father_country_of_birth", n.father_nationality), e("mother_name", n.mother_name), e("mother_nationality", n.father_nationality), e("mother_previous_nationality", n.father_nationality), e("mother_country_of_birth", n.father_nationality), e("father_place_of_birth", n.father_place_of_birth), e("mother_place_of_birth", n.mother_place_of_birth), t("marital_status", n.marital_status), "0" === n.marital_status && (e("spouse_name", n.spouse_name), t("spouse_nationality", n.father_nationality), t("spouse_previous_nationality", n.father_nationality), e("spouse_place_of_birth", n.spouse_place_of_birth), t("spouse_country_of_birth", n.father_nationality)), t("occupation", n.occupation), e("occupation", n.occupation), e("empname", n.empname), e("empdesignation", n.empdesignation), e("empaddress", n.empaddress), n.empphone && "NILL" !== n.empphone.toUpperCase()) { const t = (n.empphone || "").toString().replace(/[^\d]/g, ""); e("empphone", t.length >= 11 ? t.slice(-11) : t) } o("appl.grandparent_flag", "NO"), o("appl.prev_org", "NO") }(n) : document.getElementById("email_id") ? r(n) : document.getElementById("duration") ? function (n) { e("visa_serreq_id_129", n.hsptNameMsn), e("visa_serreq_id_130", n.hsptAddMsn), e("visa_serreq_id_131", n.docNameMsn), e("visa_serreq_id_132", n.phMsn), e("visa_serreq_id_134", n.emailMsn), e("visa_serreq_id_124", n.illness), e("duration", n.duration || "24"), function(d) {
+} function d(e) { if (!e || "string" != typeof e) return !1; const t = e.trim(); if (!t || ["NILL", "NA", "UNKNOWN", "NULL", "DD/MM/YYYY"].includes(t.toUpperCase())) return !1; let n, o, i; const a = t.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/); if (a) n = parseInt(a[1], 10), o = parseInt(a[2], 10) - 1, i = parseInt(a[3], 10); else { const e = t.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/); if (e) i = parseInt(e[1], 10), o = parseInt(e[2], 10) - 1, n = parseInt(e[3], 10); else { const e = new Date(t); if (isNaN(e.getTime())) return !1; n = e.getDate(), o = e.getMonth(), i = e.getFullYear() } } const s = new Date(i, o, n, 23, 59, 59); if (isNaN(s.getTime())) return !1; const l = new Date; return s < new Date(l.getFullYear(), l.getMonth() + 6, l.getDate(), 0, 0, 0) } function c(e) { const t = function () { let e = document.getElementById("passport_expiry_date") || document.getElementById("passport_exp_date") || document.getElementById("exp_date_id") || document.getElementById("exp_date") || document.getElementById("passexpdate") || document.querySelector('input[name="passport_expiry_date"]') || document.querySelector('input[name*="passport_expiry" i]') || document.querySelector('input[name*="passexp" i]') || document.querySelector('input[name*="exp_date" i]') || document.querySelector('input[name*="expiry" i]'); if (!e) { const t = Array.from(document.querySelectorAll("td, th, label, div, span, p")).find(e => { const t = (e.textContent || "").trim(); return /Date\s*of\s*Expiry/i.test(t) }); if (t) { const n = t.closest("tr") || t.closest(".form-group") || t.parentElement; n && (e = n.querySelector('input[type="text"], input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"])')) } } return e }(); if (!t) return; const n = d(null != e ? String(e) : t.value), o = "iv-expiry-callout-warning", i = "iv-expiry-arrow-overlay"; let a = document.getElementById(o), s = document.getElementById(i); if (n) { t.style.setProperty("background-color", "#dc2626", "important"), t.style.setProperty("color", "#ffffff", "important"), t.style.setProperty("font-weight", "bold", "important"), t.style.setProperty("border", "2px solid #b91c1c", "important"), a || (a = document.createElement("div"), a.id = o, a.style.cssText = "\n                position: fixed;\n                right: 25px;\n                width: 220px;\n                background: #dc2626;\n                border: 3.5px solid #facc15;\n                border-radius: 14px;\n                padding: 12px 16px;\n                color: #ffffff;\n                font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;\n                font-size: 13px;\n                font-weight: 700;\n                line-height: 1.45;\n                text-align: left;\n                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);\n                z-index: 2147483640;\n                pointer-events: none;\n                transition: top 0.15s ease-out;\n            ", a.innerHTML = "Passport expiry date is less then 6 month, it will be rejected. Renew the passport then apply", document.body.appendChild(a)), s || (s = document.createElementNS("http://www.w3.org/2000/svg", "svg"), s.id = i, s.style.cssText = "\n                position: fixed;\n                top: 0;\n                left: 0;\n                width: 100vw;\n                height: 100vh;\n                pointer-events: none;\n                z-index: 2147483639;\n            ", document.body.appendChild(s)); const e = () => { if (!a || !document.body.contains(a)) return; const e = t.getBoundingClientRect(); if (0 === e.width && 0 === e.height) return; const n = Math.max(70, Math.min(window.innerHeight - 160, e.top - 10)); a.style.top = `${n}px`; const o = a.getBoundingClientRect(), i = e.right + 2, l = e.top + e.height / 2, r = o.left, d = o.top + o.height / 2; s.innerHTML = `\n                <line x1="${i + 9}" y1="${l}" x2="${r}" y2="${d}" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round" />\n                <polygon points="${i},${l} ${i + 9 + 2},${l - 5.5} ${i + 9 + 2},${l + 5.5}" fill="#dc2626" />\n            ` }; e(), t._ivExpiryBound || (t._ivExpiryBound = !0, window.addEventListener("scroll", e, { passive: !0 }), window.addEventListener("resize", e, { passive: !0 }), t.addEventListener("input", () => c()), t.addEventListener("change", () => c()), t.addEventListener("keyup", () => c()), t.addEventListener("paste", () => setTimeout(c, 50))) } else t.style.removeProperty("background-color"), t.style.removeProperty("color"), t.style.removeProperty("font-weight"), t.style.removeProperty("border"), a && a.remove(), s && s.remove() } function p() { c(); let e = 0; const t = setInterval(() => { c(), e++, e > 25 && clearInterval(t) }, 400) } function u(e) { for (let e = 1; e <= 6; e++)o(`radioName[${e}]`, "NO"); !function (e) { const t = document.getElementById(e); t && !t.checked && (console.log(`- Clicking Checkbox #${e}`), t.click()) }("verifyQuestions") } function m(n) { console.log("IV Autofill: Running the autofill router...");
+  if (document.getElementById("surname")) {
+    (function (t) {
+      console.log("IV Autofill: Detected Page 2 (Applicant Details).");
+      setField(["surname"], t.surname);
+      setField(["givenName"], t.givenName);
+      setField(["prev_name_flag", "prevname_flag"], "NO");
+      setField(["gender", "sex"], t.gender);
+      setField(["birth_place", "pobTown", "pob_town", "birth_city"], t.pobTown);
+      setField(["country_birth", "pobCountry", "pob_country", "birth_country"], t.pobCountry, "BANGLADESH");
+      setField(["nic_number", "citizenId", "national_id"], t.citizenId);
+      setField(["religion"], t.religion);
+      setField(["identity_marks"], t.identity_marks || "NA", "NA");
+      setField(["education"], t.education);
+      setField(["nationality", "nationality_id"], t.nationality, "BANGLADESH");
+      setField(["nationality_by", "appl.nationality_by"], t.nationality_by || "BY BIRTH", "BY BIRTH");
+      setField(["passport_no", "passNo"], t.passNo);
+      setField(["passport_issue_place", "passPlace"], t.passPlace);
+      setField(["passport_issue_date", "passDate"], t.passDate);
+      setField(["passport_expiry_date", "passExpire"], t.passExpire);
+      p();
+      o("appl.oth_ppt", "NO");
+      const oth = document.querySelector('input[name="othPassYN"][value="N"]');
+      oth && oth.click();
+    })(n);
+  } else if (document.getElementById("pres_add1") || document.querySelector('[name="pres_add1"]') || document.getElementById("fthrname") || document.getElementById("father_nationality") || document.getElementById("pres_phone")) {
+    (function (n) {
+      console.log("IV Autofill: Detected Page 3 (Address & Family Details).");
+
+      // 1. Present Address
+      setField(["pres_add1", "pres_add_1", "pres_address1"], n.pres_add1);
+      setField(["pres_add2", "pres_add_2", "pres_address2"], n.pres_add2);
+      setField(["pres_add3", "state_prv", "pres_state", "pres_state_prv", "pres_district", "pres_province", "state_province"], n.pres_add3);
+      setField(["pres_country", "country_pres", "pres_cntry"], n.pres_country, "BANGLADESH");
+      setField(["pincode", "pres_zip", "pres_pincode", "zipcode"], n.pincode);
+
+      // Safe phone & mobile operations
+      const rawPhone = ((n.pres_phone || n.mobile || "").toString()).replace(/[^\d]/g, "");
+      const phone11 = rawPhone.length >= 11 ? rawPhone.slice(-11) : rawPhone;
+      const mobile10 = rawPhone.length >= 10 ? rawPhone.slice(-10) : rawPhone;
+      setField(["pres_phone", "phone_no", "pres_phone_no"], phone11);
+      setField(["isd_code1", "isd1", "isd_code", "pres_isd"], n.isd_code1 || "880", "880");
+      setField(["mobile", "mobile_no", "pres_mobile"], mobile10);
+      if (n.email_id && n.email_id !== "NILL") {
+        setField(["email_id", "email", "pres_email"], n.email_id);
+      }
+
+      // 2. Permanent Address
+      const sameAddressCheckbox = document.getElementById("pres_perm_same") ||
+                                  document.querySelector('input[name="pres_perm_same"]') ||
+                                  document.getElementById("same_address") ||
+                                  document.querySelector('input[name="same_address"]') ||
+                                  document.getElementById("chkSameAddress") ||
+                                  document.getElementById("sameAddress");
+      if (sameAddressCheckbox) {
+        if (!sameAddressCheckbox.checked) {
+          sameAddressCheckbox.click();
+          sameAddressCheckbox.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      }
+      setField(["perm_address1", "perm_add1", "perm_add_1"], n.perm_address1 || n.pres_add1);
+      setField(["perm_address2", "perm_add2", "perm_add_2"], n.perm_address2 || n.pres_add2);
+      setField(["perm_address3", "perm_add3", "perm_state", "perm_state_prv", "perm_district", "perm_province"], n.perm_address3 || n.pres_add3);
+      setField(["perm_country", "country_perm", "perm_cntry"], n.perm_country || n.pres_country, "BANGLADESH");
+      setField(["perm_pincode", "perm_zip", "perm_zipcode"], n.pincode);
+
+      // 3. Father's Details
+      setField(["fthrname", "father_name"], n.fthrname);
+      setField(["father_nationality"], n.father_nationality, "BANGLADESH");
+      setField(["father_previous_nationality"], n.father_previous_nationality || n.father_nationality, "BANGLADESH");
+      setField(["father_place_of_birth"], n.father_place_of_birth || n.pobTown);
+      setField(["father_country_of_birth"], n.father_country_of_birth || n.father_nationality, "BANGLADESH");
+
+      // 4. Mother's Details
+      setField(["mother_name", "mthrname"], n.mother_name);
+      setField(["mother_nationality"], n.mother_nationality || n.father_nationality, "BANGLADESH");
+      setField(["mother_previous_nationality"], n.mother_previous_nationality || n.father_nationality, "BANGLADESH");
+      setField(["mother_place_of_birth"], n.mother_place_of_birth || n.pobTown);
+      setField(["mother_country_of_birth"], n.mother_country_of_birth || n.mother_nationality || n.father_nationality, "BANGLADESH");
+
+      // 5. Marital Status & Spouse Details
+      const mStatus = String(n.marital_status || "").trim();
+      const isMarried = mStatus === "0" || mStatus.toUpperCase() === "MARRIED";
+      setField(["marital_status"], mStatus || "0", "0");
+      if (isMarried) {
+        setField(["spouse_name"], n.spouse_name);
+        setField(["spouse_nationality"], n.spouse_nationality || n.father_nationality, "BANGLADESH");
+        setField(["spouse_previous_nationality"], n.spouse_previous_nationality || n.father_nationality, "BANGLADESH");
+        setField(["spouse_place_of_birth"], n.spouse_place_of_birth || n.pobTown);
+        setField(["spouse_country_of_birth"], n.spouse_country_of_birth || n.father_nationality, "BANGLADESH");
+      }
+
+      // 6. Grandparents & Previous Org Flags
+      o("appl.grandparent_flag", "NO");
+      o("appl.prev_org", "NO");
+      const gpRadio = document.querySelector('input[name*="grandparent" i][value="N"], input[name*="grandparent" i][value="NO"]');
+      if (gpRadio) { gpRadio.checked = true; gpRadio.click(); }
+      const orgRadio = document.querySelector('input[name*="prev_org" i][value="N"], input[name*="prev_org" i][value="NO"]');
+      if (orgRadio) { orgRadio.checked = true; orgRadio.click(); }
+
+      // 7. Profession / Occupation Details
+      setField(["occupation"], n.occupation);
+      setField(["empname", "employer_name", "business_name"], n.empname);
+      setField(["empdesignation", "designation"], n.empdesignation);
+      setField(["empaddress", "employer_address"], n.empaddress);
+      if (n.empphone && "NILL" !== n.empphone.toUpperCase()) {
+        const rawEmpPhone = (n.empphone || "").toString().replace(/[^\d]/g, "");
+        setField(["empphone", "employer_phone"], rawEmpPhone.length >= 11 ? rawEmpPhone.slice(-11) : rawEmpPhone);
+      }
+    })(n);
+  } else if (document.getElementById("countryname_id") || document.getElementById("missioncode_id") || document.getElementById("startup_captcha") || document.getElementById("re_email_id") || (document.getElementById("email_id") && !document.getElementById("pres_country") && !document.getElementById("father_nationality"))) {
+    r(n);
+  } else document.getElementById("duration") ? function (n) { e("visa_serreq_id_129", n.hsptNameMsn), e("visa_serreq_id_130", n.hsptAddMsn), e("visa_serreq_id_131", n.docNameMsn), e("visa_serreq_id_132", n.phMsn), e("visa_serreq_id_134", n.emailMsn), e("visa_serreq_id_124", n.illness), e("duration", n.duration || "24"), function(d) {
   function setSel(idList, val) {
     if (!val || val === "NILL") return;
     let elem = null;
