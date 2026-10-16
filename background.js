@@ -119,16 +119,9 @@ async function registerDynamicScripts() {
   }
 }
 
-chrome.runtime.onInstalled.addListener(e => {
+chrome.runtime.onInstalled.addListener(() => {
   ensureAuthenticated();
   registerDynamicScripts();
-  if (e && ("update" === e.reason || "install" === e.reason)) {
-    try {
-      chrome.tabs.create({ url: chrome.runtime.getURL("update.html") });
-    } catch (err) {
-      console.warn("Could not open update tab:", err);
-    }
-  }
 });
 
 chrome.runtime.onStartup.addListener(() => {

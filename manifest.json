@@ -74,8 +74,6 @@
         "editor.js",
         "permission.html",
         "permission.js",
-        "update.html",
-        "update.js",
         "states-and-districts.json"
       ],
       "matches": [
