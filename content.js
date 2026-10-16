@@ -1,42 +1,352 @@
-console.log("IV Autofill: content.js script has been loaded."); function e(e, t) { if (t && "NILL" !== t) { const n = "string" == typeof e ? document.getElementById(e) : e; n && (console.log(`- Filling Text Field #${n.id || n.name || "field"} with value: ${t}`), n.value = t, n.dispatchEvent(new Event("input", { bubbles: !0 })), n.dispatchEvent(new Event("change", { bubbles: !0 })), n.dispatchEvent(new Event("blur", { bubbles: !0 }))) } } function t(e, t) { if (null == t || "NILL" === t) return; const n = "string" == typeof e ? document.getElementById(e) : e; if (!n || !n.options) return; let o = !1; for (const e of n.options) if (e.value === t || e.value.toUpperCase() === String(t).toUpperCase()) { n.value = e.value, o = !0; break } if (!o) for (const e of n.options) if (e.text.toUpperCase() === String(t).toUpperCase() || String(t).length >= 4 && e.text.toUpperCase().includes(String(t).toUpperCase())) { n.value = e.value, o = !0; break } if (o) { console.log(`- Setting Dropdown #${n.id || n.name || "select"} to: ${t}`); const e = new Event("change", { bubbles: !0 }); n.dispatchEvent(e) } else console.warn(`   -> Could not find option "${t}" in dropdown #${n.id || "select"}`) } async function n(e, t, n = 3, o = 1e3) { if (null == t || "NILL" === t) return !1; for (let i = 0; i < n; i++) { const a = document.getElementById(e); if (a && a.options) { let n = !1; for (const e of a.options) if (e.value === t) { a.value = e.value, n = !0; break } if (!n) for (const e of a.options) if (e.text.toUpperCase() === t.toUpperCase()) { a.value = e.value, n = !0; break } if (n) return console.log(`- Setting Dropdown #${e} to: ${t} (Success on try ${i + 1})`), a.dispatchEvent(new Event("change", { bubbles: !0 })), !0 } console.log(`IV Autofill: Dropdown #${e} option "${t}" not ready yet, retrying in ${o}ms... (${i + 1}/${n})`), await new Promise(e => setTimeout(e, o)) } return console.warn(`IV Autofill: Failed to set dropdown #${e} to "${t}" after ${n} retries.`), !1 } function o(e, t) { document.querySelectorAll(`input[name="${e}"]`).forEach(e => { e.value.toUpperCase() === t.toUpperCase() && (e.checked = !0, e.dispatchEvent(new Event("change", { bubbles: !0 })), e.dispatchEvent(new Event("click", { bubbles: !0 }))) }) } function i(e) { const t = e.toLowerCase(), n = Array.from(document.querySelectorAll("div, td, span, b, th")); for (let e of n) if (e.textContent.toLowerCase().includes(t)) { if (Array.from(e.children).some(e => e.textContent.toLowerCase().includes(t))) continue; let n = e.nextElementSibling, o = 0; for (; n && o < 3;) { const e = n.textContent.trim(); if (e && ":" !== e && e.length >= 2 && !e.includes("*") && !e.includes("?")) return e; n = n.nextElementSibling, o++ } } return "" } function a(e, t, n = 1e4) { return new Promise((o, i) => { if (!document.getElementById(e)) return o(); const a = Date.now(), s = setInterval(() => { const i = document.getElementById(e); if (!i) return clearInterval(s), void o(); const l = String(t).toUpperCase(); for (const e of i.options) if (e.text.toUpperCase() === l || e.value === String(t)) return clearInterval(s), void o(); Date.now() - a > n && (clearInterval(s), console.warn(`Timeout waiting for ${t} in ${e}`), o()) }, 200) }) } function s(e, t = 3e3) { return new Promise(n => { if (!document.getElementById(e)) return n(); const o = Date.now(), i = setInterval(() => { const a = document.getElementById(e); if (!a) return clearInterval(i), void n(); (a.options.length <= 1 || Date.now() - o > t) && (clearInterval(i), n()) }, 100) }) } chrome.runtime.onMessage.addListener((e, t, n) => { if ("PING_IV_CONTENT" !== e.type) if ("FILL_FORM" === e.type) { if (console.log("IV Autofill: Received data from popup. Starting process.", e.data), window.location.pathname.includes("PhotoUpload")) return e.data ? chrome.storage.local.get(null).then(t => { const n = Object.keys(t).find(n => t[n] && t[n].passNo === e.data.passNo); n && chrome.storage.local.set({ lastSelectedProfile: n }), de() }) : de(), void n({ success: !0, page: "PhotoUpload" }); if (window.location.pathname.includes("DocumentUpload")) { const e = z(); return E().then(t => { V(e, t) }), q(), void n({ success: !0, page: "DocumentUpload" }) } sessionStorage.setItem("autofillInProgress", "true"), sessionStorage.setItem("autofillData", JSON.stringify(e.data)), window.isUserExplicitFillAction = !0, m(e.data) } else "TRIGGER_WIZARD" === e.type ? (console.log("IV Autofill: Received trigger wizard request:", e.wizard), "cover_letter" === e.wizard ? ae() : "noc" === e.wizard ? se() : "undertaking" === e.wizard && ie(), n({ success: !0 })) : "RESUME_APPLICATION" === e.type ? (console.log("IV Autofill: Received resume application request:", e.tempId), (window.location.pathname.includes("CompletePartially") || document.getElementById("tempFileNo")) && S(e.tempId), n({ success: !0 })) : "DOWNLOAD_BGD_AUTOFILL" === e.type ? (console.log("IV Autofill: Received download BGD autofill request:", e.data), (window.location.pathname.includes("PrintApplication") || document.getElementById("reprint_form_id")) && D(e.data), n({ success: !0 })) : "STATUS_CHECK_AUTOFILL" === e.type ? (console.log("IV Autofill: Received status check autofill request:", e.data), (window.location.pathname.includes("StatusEnquiry") || document.querySelector('form[action*="StatusEnquiry" i]') || document.getElementById("application_id")) && Ce(e.data), n({ success: !0 })) : "TRIGGER_STATUS_CHECK" === e.type ? (console.log("IV Autofill: Received trigger status check request"), he(), n({ success: !0 })) : "TRIGGER_RESUME_MODAL" === e.type ? (console.log("IV Autofill: Received trigger resume modal request"), Ae(), n({ success: !0 })) : "TRIGGER_PRINT_MODAL" === e.type ? (console.log("IV Autofill: Received trigger print modal request"), Se(), n({ success: !0 })) : "TRIGGER_EARRIVAL_MODAL" === e.type ? (console.log("IV Autofill: Received trigger e-arrival modal request"), He(), n({ success: !0 })) : "TRIGGER_AIRSUVIDHA_MODAL" === e.type ? (console.log("IV Autofill: Received trigger air suvidha modal request"), Oe() ? Ke() : je(), n({ success: !0 })) : "TRIGGER_TRAVELTAX_MODAL" === e.type ? (console.log("IV Autofill: Received trigger travel tax modal request"), et(), n({ success: !0 })) : "TRIGGER_PORTTAX_MODAL" === e.type && (console.log("IV Autofill: Received trigger port tax modal request"), ot(), n({ success: !0 })); else n({ pong: !0, initialized: !0 }) }); let l = null; async function r(o) { console.log("IV Autofill: Detected Page 0. Setting basic fields..."); const i = "indianvisaonline.gov.in" === window.location.hostname; l = i ? Promise.resolve() : async function (e) { try { t("countryname_id", "BANGLADESH"); const n = e.missioncode_id || "BGDD", o = document.getElementById("missioncode_id"), i = o ? o.value : ""; if (t("missioncode_id", n), n !== i) { console.log("IV Autofill: Mission changed on load. Waiting for nationality list to clear..."); const e = document.getElementById("nationality_id"); e && (e.value = ""), await s("nationality_id") } console.log("IV Autofill: Waiting for Nationality/Region to load..."), await a("nationality_id", "BANGLADESH", 15e3), t("nationality_id", "BANGLADESH"); const l = document.getElementById("nationality_id"); l && ("" === l.value || l.selectedIndex <= 0) && (console.log("IV Autofill: Nationality retry..."), await new Promise(e => setTimeout(e, 1e3)), await a("nationality_id", "BANGLADESH", 1e4), t("nationality_id", "BANGLADESH")), console.log("IV Autofill: Country, Mission, and Nationality are set.") } catch (e) { console.error("IV Autofill: Error filling initial fields:", e) } }(o); !1 !== (await chrome.storage.local.get(["autoStartupCaptchaEnabled"])).autoStartupCaptchaEnabled && (console.log("IV Autofill: Auto Startup Captcha (0.5 Cr) is enabled. Starting background extraction..."), w("startup_captcha")), function (o) { if (!window.isUserExplicitFillAction || document.getElementById("iv-visa-modal")) return; const i = document.createElement("link"); i.rel = "stylesheet", i.href = chrome.runtime.getURL("modal.css"), document.head.appendChild(i); const r = "indianvisaonline.gov.in" === window.location.hostname, d = o.email_id && "NILL" !== o.email_id ? o.email_id : "", c = o.missioncode_id || "BGDD", p = document.createElement("div"); p.id = "iv-visa-modal"; let u = ""; if (r) { const e = document.getElementById("countryname_id"); let t = '<option value="">Select country</option>', n = ""; if (e) { n = e.value; for (let o of e.options) { if (!o.value) continue; const e = o.value === n ? "selected" : ""; t += `<option value="${o.value}" ${e}>${x(o.text)}</option>` } } const i = document.getElementById("missioncode_id"); let a = '<option value="">Select Mission</option>'; if (i) { const e = i.value; for (let t of i.options) { if (!t.value) continue; const n = t.value === e ? "selected" : ""; a += `<option value="${t.value}" ${n}>${x(t.text)}</option>` } } const s = document.getElementById("nationality_id"); let l = '<option value="">Select Nationality/Region</option>', r = ""; if (s) { r = s.value, r && "" !== r && "0" !== r || (r = o.pobCountry && "NILL" !== o.pobCountry ? o.pobCountry.toUpperCase() : "BGD"); for (let e of s.options) { if (!e.value) continue; const t = e.value === r ? "selected" : ""; l += `<option value="${e.value}" ${t}>${x(e.text)}</option>` } } u = `\n            <label>Applying Visa From:</label>\n            <select id="iv-country-select" class="iv-email-input" style="margin-bottom: 15px;">\n                ${t}\n            </select>\n            \n            <label>Indian Mission/Office:</label>\n            <select id="iv-mission-select" class="iv-email-input" style="margin-bottom: 15px;">\n                ${a}\n            </select>\n\n            <label>Nationality/Region:</label>\n            <select id="iv-nationality-select" class="iv-email-input" style="margin-bottom: 15px;">\n                ${l}\n            </select>\n        ` } else u = `\n            <label>Indian Mission/Office:</label>\n            <select id="iv-mission-select" class="iv-email-input" style="margin-bottom: 15px;">\n                <option value="BGDC" ${"BGDC" === c ? "selected" : ""}>BANGLADESH-CHITTAGONG</option>\n                <option value="BGDD" ${"BGDD" === c ? "selected" : ""}>BANGLADESH-DHAKA</option>\n                <option value="BGDK" ${"BGDK" === c ? "selected" : ""}>BANGLADESH-KHULNA</option>\n                <option value="BGDR" ${"BGDR" === c ? "selected" : ""}>BANGLADESH-RAJSHAHI</option>\n                <option value="BGDS" ${"BGDS" === c ? "selected" : ""}>BANGLADESH-SYLHET</option>\n            </select>\n        `; p.innerHTML = `\n        <div class="iv-visa-content">\n            <button class="iv-modal-close-btn" id="btn-visa-close-x" title="Close">&times;</button>\n            <h3>Start Application</h3>\n            <div class="iv-email-section">\n                ${u}\n                \n                <label>Applicant Email ID:</label>\n                <input type="email" id="iv-user-email" class="iv-email-input" value="${d}" placeholder="Enter valid email...">\n                <span class="iv-warning">⚠ Please check your email very carefully!</span>\n            </div>\n            <div class="iv-visa-grid">\n                <button class="iv-visa-btn btn-tourist" id="btn-tourist">Tourist Visa</button>\n                <button class="iv-visa-btn btn-double" id="btn-double">Double Entry</button>\n                <button class="iv-visa-btn btn-med-pat" id="btn-med-pat">Medical Patient</button>\n                <button class="iv-visa-btn btn-med-att" id="btn-med-att">Medical Attendant</button>\n                <button class="iv-visa-btn btn-other" id="btn-other">Others (Manual)</button>\n            </div>\n        </div>\n    `, document.body.appendChild(p); const m = document.getElementById("btn-visa-close-x"); m && m.addEventListener("click", () => p.remove()); if (r) { const e = document.getElementById("iv-country-select"), t = document.getElementById("iv-mission-select"), n = document.getElementById("iv-nationality-select"); e && (e.onchange = async () => { const i = e.value, a = document.getElementById("countryname_id"); if (a) { if (a.value = i, a.dispatchEvent(new Event("change", { bubbles: !0 })), t && (t.innerHTML = '<option value="">Loading missions...</option>'), n && (n.innerHTML = '<option value="">Loading nationalities...</option>'), await new Promise(e => setTimeout(e, 1500)), t) { const e = document.getElementById("missioncode_id"); let n = '<option value="">Select Mission</option>'; if (e) for (let t of e.options) t.value && (n += `<option value="${t.value}">${x(t.text)}</option>`); t.innerHTML = n } if (n) { const e = document.getElementById("nationality_id"); let t = '<option value="">Select Nationality/Region</option>'; if (e) { const n = o.pobCountry && "NILL" !== o.pobCountry ? o.pobCountry.toUpperCase() : "BGD"; for (let o of e.options) { if (!o.value) continue; const e = o.value === n ? "selected" : ""; t += `<option value="${o.value}" ${e}>${x(o.text)}</option>` } } n.innerHTML = t } } }), t && (t.onchange = async () => { const e = t.value, i = document.getElementById("missioncode_id"); if (i && (i.value = e, i.dispatchEvent(new Event("change", { bubbles: !0 })), n && (n.innerHTML = '<option value="">Loading nationalities...</option>'), await new Promise(e => setTimeout(e, 1200)), n)) { const e = document.getElementById("nationality_id"); let t = '<option value="">Select Nationality/Region</option>'; if (e) { const n = o.pobCountry && "NILL" !== o.pobCountry ? o.pobCountry.toUpperCase() : "BGD"; for (let o of e.options) { if (!o.value) continue; const e = o.value === n ? "selected" : ""; t += `<option value="${o.value}" ${e}>${x(o.text)}</option>` } } n.innerHTML = t } }) } const v = async i => { const d = document.getElementById("iv-user-email") ? document.getElementById("iv-user-email").value : "", c = document.getElementById("iv-mission-select") ? document.getElementById("iv-mission-select").value : "", u = document.getElementById("iv-country-select") ? document.getElementById("iv-country-select").value : "", m = document.getElementById("iv-nationality-select") ? document.getElementById("iv-nationality-select").value : "", v = o.missioncode_id || "BGDD"; if (d && (e("email_id", d), e("email_re_id", d), o.email_id = d), p.remove(), r) { u && (await n("countryname_id", u, 3, 1e3), await new Promise(e => setTimeout(e, 1200))), c && (await n("missioncode_id", c, 4, 800), await new Promise(e => setTimeout(e, 1200))); const e = m || (o.pobCountry && "NILL" !== o.pobCountry ? o.pobCountry.toUpperCase() : "BGD"); await n("nationality_id", e, 5, 800), await new Promise(e => setTimeout(e, 1e3)) } else if (l && (console.log("IV Autofill: Waiting for initial fields to finish loading..."), await l, l = null, console.log("IV Autofill: Initial fields are ready.")), c && c !== v) { console.log(`IV Autofill: Mission changed from ${v} to ${c}. Re-selecting...`); const e = document.getElementById("nationality_id"); e && (e.value = ""), t("missioncode_id", c), o.missioncode_id = c, console.log("IV Autofill: Waiting for nationality list to clear after mission change..."), await s("nationality_id"), console.log("IV Autofill: Waiting for Nationality/Region to reload..."), await a("nationality_id", "BANGLADESH", 15e3), t("nationality_id", "BANGLADESH"); const n = document.getElementById("nationality_id"); n && ("" === n.value || n.selectedIndex <= 0) && (console.log("IV Autofill: Nationality retry after mission change..."), await new Promise(e => setTimeout(e, 1500)), await a("nationality_id", "BANGLADESH", 1e4), t("nationality_id", "BANGLADESH")) } if (e("dob_id", o.dob), (function(dateVal) {
-      let dateStr = "";
-      if (dateVal && dateVal !== "NILL") {
-        const months = { JAN: "01", FEB: "02", MAR: "03", APR: "04", MAY: "05", JUN: "06", JUL: "07", AUG: "08", SEP: "09", OCT: "10", NOV: "11", DEC: "12" };
-        const textMatch = String(dateVal).trim().match(/^(\d{1,2})[-\s\/]([A-Za-z]{3})[-\s\/](\d{4})$/);
-        if (textMatch) {
-          dateStr = `${textMatch[1].padStart(2, "0")}/${months[textMatch[2].toUpperCase()] || "01"}/${textMatch[3]}`;
-        } else {
-          const numMatch = String(dateVal).trim().match(/^(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{4})$/);
-          if (numMatch) {
-            dateStr = `${numMatch[1].padStart(2, "0")}/${numMatch[2].padStart(2, "0")}/${numMatch[3]}`;
+console.log("IV Autofill: content.js script has been loaded."); function e(e, t) { if (t && "NILL" !== t) { const n = "string" == typeof e ? document.getElementById(e) : e; n && (console.log(`- Filling Text Field #${n.id || n.name || "field"} with value: ${t}`), n.value = t, n.dispatchEvent(new Event("input", { bubbles: !0 })), n.dispatchEvent(new Event("change", { bubbles: !0 })), n.dispatchEvent(new Event("blur", { bubbles: !0 }))) } } function t(e, t) {
+  if (null == t || "NILL" === t) return;
+  const n = "string" == typeof e ? document.getElementById(e) : e;
+  if (!n || !n.options) return;
+  let o = !1;
+  const target = String(t).trim().toUpperCase();
+  let alias = "";
+  if (target === "BANGLADESH" || target === "BGD") alias = (target === "BANGLADESH") ? "BGD" : "BANGLADESH";
+  else if (target === "INDIA" || target === "IND") alias = (target === "INDIA") ? "IND" : "INDIA";
+
+  for (const opt of n.options) {
+    const val = String(opt.value || "").trim().toUpperCase();
+    const txt = String(opt.text || "").trim().toUpperCase();
+    if (val === target || txt === target || (alias && (val === alias || txt === alias))) {
+      n.value = opt.value;
+      o = !0;
+      break;
+    }
+  }
+  if (!o) {
+    for (const opt of n.options) {
+      const val = String(opt.value || "").trim().toUpperCase();
+      const txt = String(opt.text || "").trim().toUpperCase();
+      if ((target.length >= 3 && (txt.includes(target) || val.includes(target))) ||
+          (alias && (txt.includes(alias) || val.includes(alias)))) {
+        n.value = opt.value;
+        o = !0;
+        break;
+      }
+    }
+  }
+  if (o) {
+    console.log(`- Setting Dropdown #${n.id || n.name || "select"} to: ${t} (value=${n.value})`);
+    n.dispatchEvent(new Event("change", { bubbles: !0 }));
+  } else {
+    console.warn(`   -> Could not find option "${t}" in dropdown #${n.id || "select"}`);
+  }
+} async function n(e, t, maxRetries = 5, retryInterval = 800) {
+  if (null == t || "NILL" === t) return !1;
+  const target = String(t).trim().toUpperCase();
+  let alias = "";
+  if (target === "BANGLADESH" || target === "BGD") alias = (target === "BANGLADESH") ? "BGD" : "BANGLADESH";
+  else if (target === "INDIA" || target === "IND") alias = (target === "INDIA") ? "IND" : "INDIA";
+
+  for (let i = 0; i < maxRetries; i++) {
+    const elem = "string" == typeof e ? document.getElementById(e) : e;
+    if (elem && elem.options && elem.options.length > 1) {
+      let matched = !1;
+      for (const opt of elem.options) {
+        const val = String(opt.value || "").trim().toUpperCase();
+        const txt = String(opt.text || "").trim().toUpperCase();
+        if (val === target || txt === target || (alias && (val === alias || txt === alias))) {
+          elem.value = opt.value;
+          matched = !0;
+          break;
+        }
+      }
+      if (!matched) {
+        for (const opt of elem.options) {
+          const val = String(opt.value || "").trim().toUpperCase();
+          const txt = String(opt.text || "").trim().toUpperCase();
+          if ((target.length >= 3 && (txt.includes(target) || val.includes(target))) ||
+              (alias && (txt.includes(alias) || val.includes(alias)))) {
+            elem.value = opt.value;
+            matched = !0;
+            break;
           }
         }
-        if (dateStr) {
-          const parts = dateStr.split("/");
-          const d = parseInt(parts[0], 10), m = parseInt(parts[1], 10) - 1, y = parseInt(parts[2], 10);
-          const target = new Date(y, m, d);
-          const minDate = new Date();
-          minDate.setDate(minDate.getDate() + 1);
-          if (target <= minDate) dateStr = "";
+      }
+      if (matched) {
+        console.log(`- Setting Dropdown #${elem.id || elem.name || "select"} to: ${t} (Success on try ${i + 1}, value=${elem.value})`);
+        elem.dispatchEvent(new Event("change", { bubbles: !0 }));
+        return !0;
+      }
+    }
+    console.log(`IV Autofill: Dropdown #${e} option "${t}" not ready yet, retrying in ${retryInterval}ms... (${i + 1}/${maxRetries})`);
+    await new Promise(res => setTimeout(res, retryInterval));
+  }
+  return console.warn(`IV Autofill: Failed to set dropdown #${e} to "${t}" after ${maxRetries} retries.`), !1;
+} function o(e, t) { document.querySelectorAll(`input[name="${e}"]`).forEach(e => { e.value.toUpperCase() === t.toUpperCase() && (e.checked = !0, e.dispatchEvent(new Event("change", { bubbles: !0 })), e.dispatchEvent(new Event("click", { bubbles: !0 }))) }) } function i(e) { const t = e.toLowerCase(), n = Array.from(document.querySelectorAll("div, td, span, b, th")); for (let e of n) if (e.textContent.toLowerCase().includes(t)) { if (Array.from(e.children).some(e => e.textContent.toLowerCase().includes(t))) continue; let n = e.nextElementSibling, o = 0; for (; n && o < 3;) { const e = n.textContent.trim(); if (e && ":" !== e && e.length >= 2 && !e.includes("*") && !e.includes("?")) return e; n = n.nextElementSibling, o++ } } return "" } function a(e, t, timeoutMs = 15000) {
+  return new Promise((resolve) => {
+    const elem = "string" == typeof e ? document.getElementById(e) : e;
+    if (!elem) return resolve();
+    const target = String(t).trim().toUpperCase();
+    let alias = "";
+    if (target === "BANGLADESH" || target === "BGD") alias = (target === "BANGLADESH") ? "BGD" : "BANGLADESH";
+    else if (target === "INDIA" || target === "IND") alias = (target === "INDIA") ? "IND" : "INDIA";
+
+    const check = () => {
+      const el = "string" == typeof e ? document.getElementById(e) : e;
+      if (!el || !el.options) return !1;
+      for (const opt of el.options) {
+        const val = String(opt.value || "").trim().toUpperCase();
+        const txt = String(opt.text || "").trim().toUpperCase();
+        if (val === target || txt === target || (alias && (val === alias || txt === alias)) || (target.length >= 3 && (txt.includes(target) || val.includes(target)))) {
+          return !0;
         }
       }
-      if (!dateStr) {
-        const future = new Date();
-        future.setDate(future.getDate() + 20);
-        const d = String(future.getDate()).padStart(2, "0");
-        const m = String(future.getMonth() + 1).padStart(2, "0");
-        const y = future.getFullYear();
-        dateStr = `${d}/${m}/${y}`;
+      return !1;
+    };
+
+    if (check()) return resolve();
+    const start = Date.now();
+    const interval = setInterval(() => {
+      if (check() || Date.now() - start > timeoutMs) {
+        clearInterval(interval);
+        resolve();
       }
-      const elem = document.getElementById("jouryney_id") || document.getElementById("journey_id") || document.querySelector('input[name*="journ" i], input[placeholder*="arrival" i], input[id*="arrival" i]');
-      if (elem) {
-        elem.value = dateStr;
-        elem.dispatchEvent(new Event("input", { bubbles: true }));
-        elem.dispatchEvent(new Event("change", { bubbles: true }));
-        elem.dispatchEvent(new Event("blur", { bubbles: true }));
+    }, 200);
+  });
+} function s(e, t = 3e3) { return new Promise(n => { if (!document.getElementById(e)) return n(); const o = Date.now(), i = setInterval(() => { const a = document.getElementById(e); if (!a) return clearInterval(i), void n(); (a.options.length <= 1 || Date.now() - o > t) && (clearInterval(i), n()) }, 100) }) } chrome.runtime.onMessage.addListener((e, t, n) => { if ("PING_IV_CONTENT" !== e.type) if ("FILL_FORM" === e.type) { if (console.log("IV Autofill: Received data from popup. Starting process.", e.data), window.location.pathname.includes("PhotoUpload")) return e.data ? chrome.storage.local.get(null).then(t => { const n = Object.keys(t).find(n => t[n] && t[n].passNo === e.data.passNo); n && chrome.storage.local.set({ lastSelectedProfile: n }), de() }) : de(), void n({ success: !0, page: "PhotoUpload" }); if (window.location.pathname.includes("DocumentUpload")) { const e = z(); return E().then(t => { V(e, t) }), q(), void n({ success: !0, page: "DocumentUpload" }) } sessionStorage.setItem("autofillInProgress", "true"), sessionStorage.setItem("autofillData", JSON.stringify(e.data)), window.isUserExplicitFillAction = !0, m(e.data) } else "TRIGGER_WIZARD" === e.type ? (console.log("IV Autofill: Received trigger wizard request:", e.wizard), "cover_letter" === e.wizard ? ae() : "noc" === e.wizard ? se() : "undertaking" === e.wizard && ie(), n({ success: !0 })) : "RESUME_APPLICATION" === e.type ? (console.log("IV Autofill: Received resume application request:", e.tempId), (window.location.pathname.includes("CompletePartially") || document.getElementById("tempFileNo")) && S(e.tempId), n({ success: !0 })) : "DOWNLOAD_BGD_AUTOFILL" === e.type ? (console.log("IV Autofill: Received download BGD autofill request:", e.data), (window.location.pathname.includes("PrintApplication") || document.getElementById("reprint_form_id")) && D(e.data), n({ success: !0 })) : "STATUS_CHECK_AUTOFILL" === e.type ? (console.log("IV Autofill: Received status check autofill request:", e.data), (window.location.pathname.includes("StatusEnquiry") || document.querySelector('form[action*="StatusEnquiry" i]') || document.getElementById("application_id")) && Ce(e.data), n({ success: !0 })) : "TRIGGER_STATUS_CHECK" === e.type ? (console.log("IV Autofill: Received trigger status check request"), he(), n({ success: !0 })) : "TRIGGER_RESUME_MODAL" === e.type ? (console.log("IV Autofill: Received trigger resume modal request"), Ae(), n({ success: !0 })) : "TRIGGER_PRINT_MODAL" === e.type ? (console.log("IV Autofill: Received trigger print modal request"), Se(), n({ success: !0 })) : "TRIGGER_EARRIVAL_MODAL" === e.type ? (console.log("IV Autofill: Received trigger e-arrival modal request"), He(), n({ success: !0 })) : "TRIGGER_AIRSUVIDHA_MODAL" === e.type ? (console.log("IV Autofill: Received trigger air suvidha modal request"), Oe() ? Ke() : je(), n({ success: !0 })) : "TRIGGER_TRAVELTAX_MODAL" === e.type ? (console.log("IV Autofill: Received trigger travel tax modal request"), et(), n({ success: !0 })) : "TRIGGER_PORTTAX_MODAL" === e.type && (console.log("IV Autofill: Received trigger port tax modal request"), ot(), n({ success: !0 })); else n({ pong: !0, initialized: !0 }) }); let l = null; async function r(o) {
+  console.log("IV Autofill: Detected Page 0 (Registration). Initializing...");
+
+  try {
+    const cElem = document.getElementById("countryname_id");
+    if (cElem && (!cElem.value || cElem.value === "")) {
+      t("countryname_id", "BANGLADESH");
+    }
+  } catch (err) {}
+
+  w("startup_captcha");
+
+  (function (o) {
+    if (!window.isUserExplicitFillAction || document.getElementById("iv-visa-modal")) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = chrome.runtime.getURL("modal.css");
+    document.head.appendChild(link);
+
+    const emailVal = o.email_id && "NILL" !== o.email_id ? o.email_id : "";
+    const defMission = o.missioncode_id || "BGDD";
+    const modal = document.createElement("div");
+    modal.id = "iv-visa-modal";
+
+    modal.innerHTML = `
+      <div class="iv-visa-content">
+        <button class="iv-modal-close-btn" id="btn-visa-close-x" title="Close">&times;</button>
+        <h3>Start Application</h3>
+        <div class="iv-email-section">
+          <label>Indian Mission/Office:</label>
+          <select id="iv-mission-select" class="iv-email-input" style="margin-bottom: 15px;">
+            <option value="BGDD" ${defMission === "BGDD" ? "selected" : ""}>BANGLADESH-DHAKA</option>
+            <option value="BGDC" ${defMission === "BGDC" ? "selected" : ""}>BANGLADESH-CHITTAGONG</option>
+            <option value="BGDK" ${defMission === "BGDK" ? "selected" : ""}>BANGLADESH-KHULNA</option>
+            <option value="BGDR" ${defMission === "BGDR" ? "selected" : ""}>BANGLADESH-RAJSHAHI</option>
+            <option value="BGDS" ${defMission === "BGDS" ? "selected" : ""}>BANGLADESH-SYLHET</option>
+          </select>
+          <label>Applicant Email ID:</label>
+          <input type="email" id="iv-user-email" class="iv-email-input" value="${emailVal}" placeholder="Enter valid email...">
+          <span class="iv-warning">⚠ Please check your email very carefully!</span>
+        </div>
+        <div class="iv-visa-grid">
+          <button class="iv-visa-btn btn-tourist" id="btn-tourist">Tourist Visa</button>
+          <button class="iv-visa-btn btn-double" id="btn-double">Double Entry</button>
+          <button class="iv-visa-btn btn-med-pat" id="btn-med-pat">Medical Patient</button>
+          <button class="iv-visa-btn btn-med-att" id="btn-med-att">Medical Attendant</button>
+          <button class="iv-visa-btn btn-other" id="btn-other">Others (Manual)</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const closeBtn = document.getElementById("btn-visa-close-x");
+    closeBtn && closeBtn.addEventListener("click", () => modal.remove());
+
+    const submitForm = async (visaType) => {
+      const emailInput = document.getElementById("iv-user-email");
+      const chosenEmail = emailInput ? emailInput.value.trim() : "";
+      const missionInput = document.getElementById("iv-mission-select");
+      const chosenMission = missionInput ? missionInput.value : defMission;
+      modal.remove();
+
+      if (chosenEmail) {
+        e("email_id", chosenEmail);
+        e("email_re_id", chosenEmail);
+        o.email_id = chosenEmail;
       }
-      return dateStr;
-    })(o.jouryney_id || o.expected_date_of_arrival), w("step1_captcha"), sessionStorage.setItem("autofillData", JSON.stringify(o)), i) { console.log("IV Autofill: Waiting for nationality to be confirmed before proceeding to visa purpose..."); const e = Date.now(); for (; Date.now() - e < 8e3;) { const e = document.getElementById("nationality_id"); if (e && e.selectedIndex > 0 && e.value) { console.log(`IV Autofill: Nationality confirmed as "${e.value}".`); break } await new Promise(e => setTimeout(e, 300)) } console.log("IV Autofill: Nationality ready. Proceeding to fill visa purpose..."), await async function (e) { const n = "visaPurposeDropdown"; let o = document.getElementById(n); o || (console.log("IV Autofill: Purpose dropdown not in DOM yet, waiting..."), o = await function (e, t = 1e4) { return new Promise(n => { const o = document.getElementById(e); if (o) return n(o); const i = Date.now(), a = setInterval(() => { const o = document.getElementById(e); if (o) return clearInterval(a), void n(o); Date.now() - i > t && (clearInterval(a), console.warn(`Timeout waiting for element #${e}`), n(null)) }, 200) }) }(n, 12e3)); o || (console.warn("IV Autofill: Purpose dropdown never appeared. Falling back to old layout."), o = null); if (o) { console.log(`IV Autofill: Waiting for visa purpose option "${e}" to be available...`), await a(n, e, 25e3), console.log(`IV Autofill: Setting visa purpose to ${e}...`), t(n, e), h(n, e); const o = 12e3, i = 2e3, s = Date.now(); let l = Date.now(), r = 0; for (; Date.now() - s < o;) { await new Promise(e => setTimeout(e, 250)); const o = document.getElementById(n); if (!o) break; if (o.value !== e) r++, console.log(`IV Autofill: Visa purpose wiped (×${r}) by site AJAX. Re-waiting for option...`), l = Date.now(), await a(n, e, 2e4), await new Promise(e => setTimeout(e, 150)), t(n, e), h(n, e), console.log(`IV Autofill: Re-set after wipe ×${r}.`); else if (Date.now() - l >= i) { console.log(`IV Autofill: Visa purpose stable for 2s. Done. (wipes=${r})`); break } } const d = document.getElementById(n); console.log(`IV Autofill: Final visa purpose = "${d ? d.value : "N/A"}" (expected "${e}").`) } else { let n = null, o = null; if ("544" === e ? (n = "3", o = "234") : "532" === e ? (n = "87", o = "186") : "545" === e ? (n = "16", o = "235") : "546" === e && (n = "16", o = "236"), n && o) { await a("visaService", n, 15e3), t("visaService", n), await a("purpose", o, 15e3), await new Promise(e => setTimeout(e, 300)), t("purpose", o), await new Promise(e => setTimeout(e, 800)); const e = document.getElementById("visaService"); e && e.value !== n && (await a("visaService", n, 8e3), t("visaService", n), await a("purpose", o, 8e3), await new Promise(e => setTimeout(e, 300)), t("purpose", o)) } } }(i) } }; document.getElementById("btn-tourist").onclick = () => v("544"), document.getElementById("btn-double").onclick = () => v("532"), document.getElementById("btn-med-pat").onclick = () => v("545"), document.getElementById("btn-med-att").onclick = () => v("546"), document.getElementById("btn-other").onclick = () => v(null) }(o) } function d(e) { if (!e || "string" != typeof e) return !1; const t = e.trim(); if (!t || ["NILL", "NA", "UNKNOWN", "NULL", "DD/MM/YYYY"].includes(t.toUpperCase())) return !1; let n, o, i; const a = t.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/); if (a) n = parseInt(a[1], 10), o = parseInt(a[2], 10) - 1, i = parseInt(a[3], 10); else { const e = t.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/); if (e) i = parseInt(e[1], 10), o = parseInt(e[2], 10) - 1, n = parseInt(e[3], 10); else { const e = new Date(t); if (isNaN(e.getTime())) return !1; n = e.getDate(), o = e.getMonth(), i = e.getFullYear() } } const s = new Date(i, o, n, 23, 59, 59); if (isNaN(s.getTime())) return !1; const l = new Date; return s < new Date(l.getFullYear(), l.getMonth() + 6, l.getDate(), 0, 0, 0) } function c(e) { const t = function () { let e = document.getElementById("passport_expiry_date") || document.getElementById("passport_exp_date") || document.getElementById("exp_date_id") || document.getElementById("exp_date") || document.getElementById("passexpdate") || document.querySelector('input[name="passport_expiry_date"]') || document.querySelector('input[name*="passport_expiry" i]') || document.querySelector('input[name*="passexp" i]') || document.querySelector('input[name*="exp_date" i]') || document.querySelector('input[name*="expiry" i]'); if (!e) { const t = Array.from(document.querySelectorAll("td, th, label, div, span, p")).find(e => { const t = (e.textContent || "").trim(); return /Date\s*of\s*Expiry/i.test(t) }); if (t) { const n = t.closest("tr") || t.closest(".form-group") || t.parentElement; n && (e = n.querySelector('input[type="text"], input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"])')) } } return e }(); if (!t) return; const n = d(null != e ? String(e) : t.value), o = "iv-expiry-callout-warning", i = "iv-expiry-arrow-overlay"; let a = document.getElementById(o), s = document.getElementById(i); if (n) { t.style.setProperty("background-color", "#dc2626", "important"), t.style.setProperty("color", "#ffffff", "important"), t.style.setProperty("font-weight", "bold", "important"), t.style.setProperty("border", "2px solid #b91c1c", "important"), a || (a = document.createElement("div"), a.id = o, a.style.cssText = "\n                position: fixed;\n                right: 25px;\n                width: 220px;\n                background: #dc2626;\n                border: 3.5px solid #facc15;\n                border-radius: 14px;\n                padding: 12px 16px;\n                color: #ffffff;\n                font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;\n                font-size: 13px;\n                font-weight: 700;\n                line-height: 1.45;\n                text-align: left;\n                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);\n                z-index: 2147483640;\n                pointer-events: none;\n                transition: top 0.15s ease-out;\n            ", a.innerHTML = "Passport expiry date is less then 6 month, it will be rejected. Renew the passport then apply", document.body.appendChild(a)), s || (s = document.createElementNS("http://www.w3.org/2000/svg", "svg"), s.id = i, s.style.cssText = "\n                position: fixed;\n                top: 0;\n                left: 0;\n                width: 100vw;\n                height: 100vh;\n                pointer-events: none;\n                z-index: 2147483639;\n            ", document.body.appendChild(s)); const e = () => { if (!a || !document.body.contains(a)) return; const e = t.getBoundingClientRect(); if (0 === e.width && 0 === e.height) return; const n = Math.max(70, Math.min(window.innerHeight - 160, e.top - 10)); a.style.top = `${n}px`; const o = a.getBoundingClientRect(), i = e.right + 2, l = e.top + e.height / 2, r = o.left, d = o.top + o.height / 2; s.innerHTML = `\n                <line x1="${i + 9}" y1="${l}" x2="${r}" y2="${d}" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round" />\n                <polygon points="${i},${l} ${i + 9 + 2},${l - 5.5} ${i + 9 + 2},${l + 5.5}" fill="#dc2626" />\n            ` }; e(), t._ivExpiryBound || (t._ivExpiryBound = !0, window.addEventListener("scroll", e, { passive: !0 }), window.addEventListener("resize", e, { passive: !0 }), t.addEventListener("input", () => c()), t.addEventListener("change", () => c()), t.addEventListener("keyup", () => c()), t.addEventListener("paste", () => setTimeout(c, 50))) } else t.style.removeProperty("background-color"), t.style.removeProperty("color"), t.style.removeProperty("font-weight"), t.style.removeProperty("border"), a && a.remove(), s && s.remove() } function p() { c(); let e = 0; const t = setInterval(() => { c(), e++, e > 25 && clearInterval(t) }, 400) } function u(e) { for (let e = 1; e <= 6; e++)o(`radioName[${e}]`, "NO"); !function (e) { const t = document.getElementById(e); t && !t.checked && (console.log(`- Clicking Checkbox #${e}`), t.click()) }("verifyQuestions") } function m(n) { console.log("IV Autofill: Running the autofill router..."), document.getElementById("surname") ? function (t) { console.log("IV Autofill: Detected Page 1."), e("surname", t.surname), e("givenName", t.givenName), e("birth_place", t.pobTown), e("nic_number", t.citizenId), e("identity_marks", "NA"), e("passport_no", t.passNo), e("passport_issue_place", t.passPlace), e("passport_issue_date", t.passDate), e("passport_expiry_date", t.passExpire), p(), o("appl.oth_ppt", "NO"); const n = document.querySelector('input[name="othPassYN"][value="N"]'); n && n.click(), e("gender", t.gender), e("country_birth", t.pobCountry), e("religion", t.religion), e("education", t.education), e("nationality", t.nationality), e("nationality_by", t.nationality) }(n) : document.getElementById("pres_add1") ? function (n) { if (e("pres_add1", n.pres_add1), e("pres_add2", n.pres_add2), e("pres_country", n.pres_country), e("pres_add3", n.pres_add3), e("pincode", n.pincode), e("pres_phone", n.pres_phone.slice(-11)), e("isd_code1", n.isd_code1), e("mobile", n.pres_phone.slice(-10)), e("perm_address1", n.perm_address1), e("perm_address2", n.perm_address2), e("perm_address3", n.perm_address3), e("fthrname", n.fthrname), e("father_nationality", n.father_nationality), e("father_previous_nationality", n.father_nationality), e("father_country_of_birth", n.father_nationality), e("mother_name", n.mother_name), e("mother_nationality", n.father_nationality), e("mother_previous_nationality", n.father_nationality), e("mother_country_of_birth", n.father_nationality), e("father_place_of_birth", n.father_place_of_birth), e("mother_place_of_birth", n.mother_place_of_birth), t("marital_status", n.marital_status), "0" === n.marital_status && (e("spouse_name", n.spouse_name), t("spouse_nationality", n.father_nationality), t("spouse_previous_nationality", n.father_nationality), e("spouse_place_of_birth", n.spouse_place_of_birth), t("spouse_country_of_birth", n.father_nationality)), t("occupation", n.occupation), e("occupation", n.occupation), e("empname", n.empname), e("empdesignation", n.empdesignation), e("empaddress", n.empaddress), n.empphone && "NILL" !== n.empphone.toUpperCase()) { const t = (n.empphone || "").toString().replace(/[^\d]/g, ""); e("empphone", t.length >= 11 ? t.slice(-11) : t) } o("appl.grandparent_flag", "NO"), o("appl.prev_org", "NO") }(n) : document.getElementById("email_id") ? r(n) : document.getElementById("duration") ? function (n) { e("visa_serreq_id_129", n.hsptNameMsn), e("visa_serreq_id_130", n.hsptAddMsn), e("visa_serreq_id_131", n.docNameMsn), e("visa_serreq_id_132", n.phMsn), e("visa_serreq_id_134", n.emailMsn), e("visa_serreq_id_124", n.illness), e("duration", n.duration || "24"), function(d) {
+      o.missioncode_id = chosenMission;
+
+      // Step 1: Set Country to BANGLADESH
+      console.log("IV Autofill: Step 1 - Setting Country...");
+      t("countryname_id", "BANGLADESH");
+      await new Promise(r => setTimeout(r, 600));
+
+      // Step 2: Wait for Mission dropdown options and set Mission
+      console.log(`IV Autofill: Step 2 - Waiting for Mission options & setting to ${chosenMission}...`);
+      await a("missioncode_id", chosenMission, 12000);
+      t("missioncode_id", chosenMission);
+      await new Promise(r => setTimeout(r, 800));
+
+      // Step 3: Wait for Nationality dropdown options and set Nationality
+      const natVal = o.nationality || o.pobCountry || "BANGLADESH";
+      console.log(`IV Autofill: Step 3 - Waiting for Nationality options & setting to ${natVal}...`);
+      await a("nationality_id", "BANGLADESH", 15000);
+      t("nationality_id", natVal);
+
+      // Verify nationality is selected; retry up to 6 times if needed
+      for (let retry = 0; retry < 6; retry++) {
+        const natElem = document.getElementById("nationality_id");
+        if (natElem && natElem.selectedIndex > 0 && natElem.value) {
+          console.log(`IV Autofill: Nationality confirmed as "${natElem.value}" (option: "${natElem.options[natElem.selectedIndex]?.text}").`);
+          break;
+        }
+        console.log(`IV Autofill: Nationality not selected yet, retrying (${retry + 1}/6)...`);
+        await new Promise(r => setTimeout(r, 700));
+        await a("nationality_id", "BANGLADESH", 5000);
+        t("nationality_id", natVal);
+      }
+
+      // Step 4: Fill DOB
+      e("dob_id", o.dob);
+
+      // Step 5: Fill Expected Date of Arrival
+      (function(dateVal) {
+        let dateStr = "";
+        if (dateVal && dateVal !== "NILL") {
+          const months = { JAN: "01", FEB: "02", MAR: "03", APR: "04", MAY: "05", JUN: "06", JUL: "07", AUG: "08", SEP: "09", OCT: "10", NOV: "11", DEC: "12" };
+          const textMatch = String(dateVal).trim().match(/^(\d{1,2})[-\s\/]([A-Za-z]{3})[-\s\/](\d{4})$/);
+          if (textMatch) {
+            dateStr = `${textMatch[1].padStart(2, "0")}/${months[textMatch[2].toUpperCase()] || "01"}/${textMatch[3]}`;
+          } else {
+            const numMatch = String(dateVal).trim().match(/^(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{4})$/);
+            if (numMatch) {
+              dateStr = `${numMatch[1].padStart(2, "0")}/${numMatch[2].padStart(2, "0")}/${numMatch[3]}`;
+            }
+          }
+          if (dateStr) {
+            const parts = dateStr.split("/");
+            const d = parseInt(parts[0], 10), m = parseInt(parts[1], 10) - 1, y = parseInt(parts[2], 10);
+            const target = new Date(y, m, d);
+            const minDate = new Date();
+            minDate.setDate(minDate.getDate() + 1);
+            if (target <= minDate) dateStr = "";
+          }
+        }
+        if (!dateStr) {
+          const future = new Date();
+          future.setDate(future.getDate() + 20);
+          const d = String(future.getDate()).padStart(2, "0");
+          const m = String(future.getMonth() + 1).padStart(2, "0");
+          const y = future.getFullYear();
+          dateStr = `${d}/${m}/${y}`;
+        }
+        const elem = document.getElementById("jouryney_id") || document.getElementById("journey_id") || document.querySelector('input[name*="journ" i], input[placeholder*="arrival" i], input[id*="arrival" i]');
+        if (elem) {
+          elem.value = dateStr;
+          elem.dispatchEvent(new Event("input", { bubbles: true }));
+          elem.dispatchEvent(new Event("change", { bubbles: true }));
+          elem.dispatchEvent(new Event("blur", { bubbles: true }));
+        }
+        return dateStr;
+      })(o.jouryney_id || o.expected_date_of_arrival);
+
+      // Step 6: Captcha
+      w("step1_captcha");
+
+      sessionStorage.setItem("autofillData", JSON.stringify(o));
+
+      // Step 7: Visa Purpose
+      if (visaType) {
+        console.log("IV Autofill: Waiting for nationality confirmation before visa purpose...");
+        const startNatWait = Date.now();
+        while (Date.now() - startNatWait < 8000) {
+          const natElem = document.getElementById("nationality_id");
+          if (natElem && natElem.selectedIndex > 0 && natElem.value) {
+            console.log(`IV Autofill: Nationality confirmed as "${natElem.value}".`);
+            break;
+          }
+          await new Promise(r => setTimeout(r, 300));
+        }
+
+        console.log("IV Autofill: Nationality ready. Proceeding to fill visa purpose...");
+        await (async function (type) {
+          const n = "visaPurposeDropdown";
+          let oElem = document.getElementById(n);
+          if (!oElem) {
+            console.log("IV Autofill: Purpose dropdown not in DOM yet, waiting...");
+            oElem = await (function (elemId, timeout = 12000) {
+              return new Promise(res => {
+                const el = document.getElementById(elemId);
+                if (el) return res(el);
+                const s = Date.now();
+                const inter = setInterval(() => {
+                  const el = document.getElementById(elemId);
+                  if (el) { clearInterval(inter); return res(el); }
+                  if (Date.now() - s > timeout) { clearInterval(inter); console.warn(`Timeout waiting for #${elemId}`); res(null); }
+                }, 200);
+              });
+            })(n, 12000);
+          }
+          if (oElem) {
+            console.log(`IV Autofill: Waiting for visa purpose option "${type}"...`);
+            await a(n, type, 25000);
+            console.log(`IV Autofill: Setting visa purpose to ${type}...`);
+            t(n, type);
+            h(n, type);
+            const maxWait = 12000, stableReq = 2000, startT = Date.now();
+            let lastChange = Date.now(), wipes = 0;
+            while (Date.now() - startT < maxWait) {
+              await new Promise(r => setTimeout(r, 250));
+              const el = document.getElementById(n);
+              if (!el) break;
+              if (el.value !== type) {
+                wipes++;
+                console.log(`IV Autofill: Visa purpose wiped (x${wipes}) by site AJAX. Re-setting...`);
+                lastChange = Date.now();
+                await a(n, type, 20000);
+                await new Promise(r => setTimeout(r, 150));
+                t(n, type);
+                h(n, type);
+              } else if (Date.now() - lastChange >= stableReq) {
+                console.log(`IV Autofill: Visa purpose stable for 2s. Done. (wipes=${wipes})`);
+                break;
+              }
+            }
+          } else {
+            let nVal = null, pVal = null;
+            if ("544" === type) { nVal = "3"; pVal = "234"; }
+            else if ("532" === type) { nVal = "87"; pVal = "186"; }
+            else if ("545" === type) { nVal = "16"; pVal = "235"; }
+            else if ("546" === type) { nVal = "16"; pVal = "236"; }
+            if (nVal && pVal) {
+              await a("visaService", nVal, 15000);
+              t("visaService", nVal);
+              await a("purpose", pVal, 15000);
+              await new Promise(r => setTimeout(r, 300));
+              t("purpose", pVal);
+              await new Promise(r => setTimeout(r, 800));
+              const vs = document.getElementById("visaService");
+              if (vs && vs.value !== nVal) {
+                await a("visaService", nVal, 8000);
+                t("visaService", nVal);
+                await a("purpose", pVal, 8000);
+                await new Promise(r => setTimeout(r, 300));
+                t("purpose", pVal);
+              }
+            }
+          }
+        })(visaType);
+      }
+    };
+
+    document.getElementById("btn-tourist").onclick = () => submitForm("544");
+    document.getElementById("btn-double").onclick = () => submitForm("532");
+    document.getElementById("btn-med-pat").onclick = () => submitForm("545");
+    document.getElementById("btn-med-att").onclick = () => submitForm("546");
+    document.getElementById("btn-other").onclick = () => submitForm(null);
+  })(o);
+} function d(e) { if (!e || "string" != typeof e) return !1; const t = e.trim(); if (!t || ["NILL", "NA", "UNKNOWN", "NULL", "DD/MM/YYYY"].includes(t.toUpperCase())) return !1; let n, o, i; const a = t.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/); if (a) n = parseInt(a[1], 10), o = parseInt(a[2], 10) - 1, i = parseInt(a[3], 10); else { const e = t.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/); if (e) i = parseInt(e[1], 10), o = parseInt(e[2], 10) - 1, n = parseInt(e[3], 10); else { const e = new Date(t); if (isNaN(e.getTime())) return !1; n = e.getDate(), o = e.getMonth(), i = e.getFullYear() } } const s = new Date(i, o, n, 23, 59, 59); if (isNaN(s.getTime())) return !1; const l = new Date; return s < new Date(l.getFullYear(), l.getMonth() + 6, l.getDate(), 0, 0, 0) } function c(e) { const t = function () { let e = document.getElementById("passport_expiry_date") || document.getElementById("passport_exp_date") || document.getElementById("exp_date_id") || document.getElementById("exp_date") || document.getElementById("passexpdate") || document.querySelector('input[name="passport_expiry_date"]') || document.querySelector('input[name*="passport_expiry" i]') || document.querySelector('input[name*="passexp" i]') || document.querySelector('input[name*="exp_date" i]') || document.querySelector('input[name*="expiry" i]'); if (!e) { const t = Array.from(document.querySelectorAll("td, th, label, div, span, p")).find(e => { const t = (e.textContent || "").trim(); return /Date\s*of\s*Expiry/i.test(t) }); if (t) { const n = t.closest("tr") || t.closest(".form-group") || t.parentElement; n && (e = n.querySelector('input[type="text"], input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"])')) } } return e }(); if (!t) return; const n = d(null != e ? String(e) : t.value), o = "iv-expiry-callout-warning", i = "iv-expiry-arrow-overlay"; let a = document.getElementById(o), s = document.getElementById(i); if (n) { t.style.setProperty("background-color", "#dc2626", "important"), t.style.setProperty("color", "#ffffff", "important"), t.style.setProperty("font-weight", "bold", "important"), t.style.setProperty("border", "2px solid #b91c1c", "important"), a || (a = document.createElement("div"), a.id = o, a.style.cssText = "\n                position: fixed;\n                right: 25px;\n                width: 220px;\n                background: #dc2626;\n                border: 3.5px solid #facc15;\n                border-radius: 14px;\n                padding: 12px 16px;\n                color: #ffffff;\n                font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;\n                font-size: 13px;\n                font-weight: 700;\n                line-height: 1.45;\n                text-align: left;\n                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);\n                z-index: 2147483640;\n                pointer-events: none;\n                transition: top 0.15s ease-out;\n            ", a.innerHTML = "Passport expiry date is less then 6 month, it will be rejected. Renew the passport then apply", document.body.appendChild(a)), s || (s = document.createElementNS("http://www.w3.org/2000/svg", "svg"), s.id = i, s.style.cssText = "\n                position: fixed;\n                top: 0;\n                left: 0;\n                width: 100vw;\n                height: 100vh;\n                pointer-events: none;\n                z-index: 2147483639;\n            ", document.body.appendChild(s)); const e = () => { if (!a || !document.body.contains(a)) return; const e = t.getBoundingClientRect(); if (0 === e.width && 0 === e.height) return; const n = Math.max(70, Math.min(window.innerHeight - 160, e.top - 10)); a.style.top = `${n}px`; const o = a.getBoundingClientRect(), i = e.right + 2, l = e.top + e.height / 2, r = o.left, d = o.top + o.height / 2; s.innerHTML = `\n                <line x1="${i + 9}" y1="${l}" x2="${r}" y2="${d}" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round" />\n                <polygon points="${i},${l} ${i + 9 + 2},${l - 5.5} ${i + 9 + 2},${l + 5.5}" fill="#dc2626" />\n            ` }; e(), t._ivExpiryBound || (t._ivExpiryBound = !0, window.addEventListener("scroll", e, { passive: !0 }), window.addEventListener("resize", e, { passive: !0 }), t.addEventListener("input", () => c()), t.addEventListener("change", () => c()), t.addEventListener("keyup", () => c()), t.addEventListener("paste", () => setTimeout(c, 50))) } else t.style.removeProperty("background-color"), t.style.removeProperty("color"), t.style.removeProperty("font-weight"), t.style.removeProperty("border"), a && a.remove(), s && s.remove() } function p() { c(); let e = 0; const t = setInterval(() => { c(), e++, e > 25 && clearInterval(t) }, 400) } function u(e) { for (let e = 1; e <= 6; e++)o(`radioName[${e}]`, "NO"); !function (e) { const t = document.getElementById(e); t && !t.checked && (console.log(`- Clicking Checkbox #${e}`), t.click()) }("verifyQuestions") } function m(n) { console.log("IV Autofill: Running the autofill router..."), document.getElementById("surname") ? function (t) { console.log("IV Autofill: Detected Page 1."), e("surname", t.surname), e("givenName", t.givenName), e("birth_place", t.pobTown), e("nic_number", t.citizenId), e("identity_marks", "NA"), e("passport_no", t.passNo), e("passport_issue_place", t.passPlace), e("passport_issue_date", t.passDate), e("passport_expiry_date", t.passExpire), p(), o("appl.oth_ppt", "NO"); const n = document.querySelector('input[name="othPassYN"][value="N"]'); n && n.click(), e("gender", t.gender), e("country_birth", t.pobCountry), e("religion", t.religion), e("education", t.education), e("nationality", t.nationality), e("nationality_by", t.nationality) }(n) : document.getElementById("pres_add1") ? function (n) { if (e("pres_add1", n.pres_add1), e("pres_add2", n.pres_add2), e("pres_country", n.pres_country), e("pres_add3", n.pres_add3), e("pincode", n.pincode), e("pres_phone", n.pres_phone.slice(-11)), e("isd_code1", n.isd_code1), e("mobile", n.pres_phone.slice(-10)), e("perm_address1", n.perm_address1), e("perm_address2", n.perm_address2), e("perm_address3", n.perm_address3), e("fthrname", n.fthrname), e("father_nationality", n.father_nationality), e("father_previous_nationality", n.father_nationality), e("father_country_of_birth", n.father_nationality), e("mother_name", n.mother_name), e("mother_nationality", n.father_nationality), e("mother_previous_nationality", n.father_nationality), e("mother_country_of_birth", n.father_nationality), e("father_place_of_birth", n.father_place_of_birth), e("mother_place_of_birth", n.mother_place_of_birth), t("marital_status", n.marital_status), "0" === n.marital_status && (e("spouse_name", n.spouse_name), t("spouse_nationality", n.father_nationality), t("spouse_previous_nationality", n.father_nationality), e("spouse_place_of_birth", n.spouse_place_of_birth), t("spouse_country_of_birth", n.father_nationality)), t("occupation", n.occupation), e("occupation", n.occupation), e("empname", n.empname), e("empdesignation", n.empdesignation), e("empaddress", n.empaddress), n.empphone && "NILL" !== n.empphone.toUpperCase()) { const t = (n.empphone || "").toString().replace(/[^\d]/g, ""); e("empphone", t.length >= 11 ? t.slice(-11) : t) } o("appl.grandparent_flag", "NO"), o("appl.prev_org", "NO") }(n) : document.getElementById("email_id") ? r(n) : document.getElementById("duration") ? function (n) { e("visa_serreq_id_129", n.hsptNameMsn), e("visa_serreq_id_130", n.hsptAddMsn), e("visa_serreq_id_131", n.docNameMsn), e("visa_serreq_id_132", n.phMsn), e("visa_serreq_id_134", n.emailMsn), e("visa_serreq_id_124", n.illness), e("duration", n.duration || "24"), function(d) {
   function setSel(idList, val) {
     if (!val || val === "NILL") return;
     let elem = null;
