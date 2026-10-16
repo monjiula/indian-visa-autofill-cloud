@@ -48,6 +48,27 @@ chrome.runtime.onMessage.addListener((e, t, n) => {
     return true;
   }
 
+  if (e && "FETCH_IMAGE_BASE64" === e.type) {
+    fetch(e.url)
+      .then(res => res.arrayBuffer())
+      .then(buf => {
+        const bytes = new Uint8Array(buf);
+        let binary = '';
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i += 8192) {
+          const chunk = bytes.subarray(i, Math.min(i + 8192, len));
+          binary += String.fromCharCode.apply(null, chunk);
+        }
+        const b64 = btoa(binary);
+        n({ ok: true, data: b64 });
+      })
+      .catch(err => {
+        console.warn("IV Autofill: FETCH_IMAGE_BASE64 error:", err);
+        n({ ok: false, error: err.message });
+      });
+    return true;
+  }
+
   if (e && "FETCH_LAMBDA" === e.type) {
     // Fallback lambda fetcher if ever needed
     fetch(e.url, {

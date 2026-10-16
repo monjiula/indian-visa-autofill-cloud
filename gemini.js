@@ -298,14 +298,55 @@ async function fetchWithRetry(apiKey, body, model, maxRetries = 2) {
 
 // ─── Core API Call Functions ──────────────────────────────────
 
-async function getAdvancedSettings() {
+export async function getApiKey() {
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    if (chrome.storage.local) {
+      const local = await chrome.storage.local.get(['geminiApiKey', 'apiKey']);
+      if (local && local.geminiApiKey) return local.geminiApiKey.trim();
+      if (local && local.apiKey) return local.apiKey.trim();
+    }
+    if (chrome.storage.sync) {
+      const sync = await chrome.storage.sync.get(['geminiApiKey', 'apiKey']);
+      if (sync && sync.geminiApiKey) return sync.geminiApiKey.trim();
+      if (sync && sync.apiKey) return sync.apiKey.trim();
+    }
+  }
+  return '';
+}
+
+export async function saveApiKey(key) {
+  const trimmed = (key || '').trim();
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    if (chrome.storage.local) {
+      await chrome.storage.local.set({ geminiApiKey: trimmed });
+    }
+    if (chrome.storage.sync) {
+      await chrome.storage.sync.set({ geminiApiKey: trimmed });
+    }
+  }
+  return true;
+}
+
+export async function getAdvancedSettings() {
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-    const settings = await chrome.storage.local.get(['iv_model', 'iv_promptBGD', 'iv_promptPassport']);
+    const settings = await chrome.storage.local.get(['iv_model', 'iv_promptBGD', 'iv_promptPassport', 'iv_autoDeleteDays', 'iv_fillMissingOnly']);
     if (['gemini-1.5-flash', 'gemini-2.5-flash', 'gemini-flash-latest'].includes(settings.iv_model)) settings.iv_model = DEFAULT_GEMINI_MODEL;
     return settings;
   }
   return {};
 }
+
+export async function saveAdvancedSettings(settings) {
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local && settings) {
+    await chrome.storage.local.set(settings);
+    if (chrome.storage.sync) {
+      await chrome.storage.sync.set(settings);
+    }
+  }
+  return true;
+}
+
+export { DEFAULT_GEMINI_MODEL };
 
 async function callGeminiText(apiKey, promptText) {
   const settings = await getAdvancedSettings();
@@ -410,16 +451,18 @@ export async function testApiKey(apiKey) {
 
 export async function solveCaptcha(base64Data, mimeType = "image/png") {
   const apiKey = await getApiKey();
-  if (!apiKey) throw new Error("No Gemini API key found");
+  if (!apiKey) throw new Error("No Gemini API key found. Please save your API key in Settings.");
   const settings = await getAdvancedSettings();
   const model = settings.iv_model || DEFAULT_GEMINI_MODEL;
   const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent";
   
+  const cleanBase64 = String(base64Data).replace(/^data:image\/[a-zA-Z+]+;base64,/, '').trim();
+  
   const body = {
     contents: [{
       parts: [
-        { inlineData: { mimeType: mimeType, data: base64Data } },
-        { text: "This is a captcha image. Read and output ONLY the alphanumeric characters in the image. Do NOT write any other text or punctuation." }
+        { inlineData: { mimeType: mimeType || "image/png", data: cleanBase64 } },
+        { text: "This is a captcha image from the Indian Visa Application Portal. Read the alphanumeric characters in the image. Output ONLY the exact captcha text in uppercase letters and numbers, with NO other words, spaces, or markdown." }
       ]
     }],
     generationConfig: {
@@ -427,14 +470,35 @@ export async function solveCaptcha(base64Data, mimeType = "image/png") {
     }
   };
 
-  const response = await fetch(endpoint + "?key=" + apiKey.trim(), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
+  let response;
+  try {
+    response = await fetch(endpoint + "?key=" + apiKey.trim(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+  } catch (netErr) {
+    throw new Error("Network error contacting Gemini API: " + netErr.message);
+  }
 
   if (!response.ok) {
-    throw new Error("Captcha solve failed with status " + response.status);
+    const errJson = await response.json().catch(() => ({}));
+    const errMsg = errJson?.error?.message || `Status ${response.status}`;
+    if (response.status === 404 && model !== 'gemini-2.5-flash') {
+      console.warn(`[Gemini Captcha] Model ${model} returned 404, attempting fallback to gemini-2.5-flash...`);
+      const fallbackEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+      const fallbackRes = await fetch(fallbackEndpoint + "?key=" + apiKey.trim(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (fallbackRes.ok) {
+        const fbData = await fallbackRes.json();
+        const fbText = fbData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        return fbText.trim().replace(/[^a-zA-Z0-9]/g, "");
+      }
+    }
+    throw new Error("Captcha solve failed (" + response.status + "): " + errMsg);
   }
 
   const data = await response.json();
