@@ -56,7 +56,12 @@ const VISA_FIELDS_SCHEMA = {
     empname:              { type: "string" },
     empdesignation:       { type: "string" },
     empaddress:           { type: "string" },
+    duration:             { type: "string" },
+    visa_entry_id:        { type: "string" },
     entrypoint:           { type: "string" },
+    exitpoint:            { type: "string" },
+    jouryney_id:          { type: "string" },
+    places_to_visit:      { type: "string" },
     old_visa_no:          { type: "string" },
     old_visa_type_id:     { type: "string" },
     oldVisaTypeRaw:       { type: "string" },
@@ -86,7 +91,11 @@ CRITICAL RULES:
 7. education: Must be one of ["GRADUATE AND ABOVE", "HIGHER SECONDARY", "SECONDARY", "MATRICULATION", "BELOW MATRIC", "ILLITERATE", "NA (BELOW 10)"]. Map accordingly.
 8. nationality, pres_country, father_nationality: Use country names like "BANGLADESH", "INDIA".
 9. isd_code1: Just the numbers, e.g., "880" for Bangladesh.
-10. entrypoint: Identify the Indian entry port and map to correct spelling if possible (e.g., "GHOJADANGA(BENAPOLE)", "KOLKATA AIRPORT", "BY ROAD HARIDASPUR", "AGARTALA", "HILI ROAD", "CHANGRABANDHA").
+10. entrypoint: Identify the Indian entry port (e.g., "BY ROAD MAHADIPUR", "BY ROAD HARIDASPUR", "BY ROAD GHOJADANGA", "BY AIR", "BY ROAD AGARTALA", "BY ROAD CHANGRABANDHA", "BY ROAD HILI").
+11. exitpoint: Expected Port of Exit from India. Identify the Indian exit port (e.g., "BY ROAD MAHADIPUR", "BY ROAD HARIDASPUR", "BY ROAD GHOJADANGA", "BY AIR", "BY ROAD AGARTALA", "BY ROAD CHANGRABANDHA", "BY ROAD HILI"). If exit port is not specified, use the same as entrypoint.
+12. visa_entry_id: Number of entries: map "MULTIPLE" to "2", "SINGLE" to "1", "DOUBLE" to "3", "TRIPLE" to "4". Default is "2".
+13. duration: Duration of visa in months (e.g. "24", "12", "6"). Default is "24".
+14. jouryney_id: Expected date of journey in dd/mm/yyyy format.
 11. identity_marks: "NA" if not specified.
 12. old_visa_type_id: "3" (Tourist), "16" (Medical), "87" (Double Entry), "4" (Business), "5" (Student). Use "NILL" if no old visa.
 13. Phone/Mobile numbers should only contain digits, remove spaces or symbols.
@@ -179,15 +188,46 @@ function postProcessData(data) {
   });
 
   // 3. Port name mapping heuristics for BD common ports
+  function normalizePort(port) {
+    if (!port || port === 'NILL') return 'BY ROAD HARIDASPUR';
+    const p = String(port).toUpperCase();
+    if (p.includes('MAHADIPUR')) return 'BY ROAD MAHADIPUR';
+    if (p.includes('BENAPOLE') || p.includes('GHOJADANGA')) return 'BY ROAD GHOJADANGA';
+    if (p.includes('AGARTALA') || p.includes('AKHAURA')) return 'BY ROAD AGARTALA';
+    if (p.includes('HILI')) return 'BY ROAD HILI';
+    if (p.includes('HARIDASPUR') || p.includes('PETRAPOLE')) return 'BY ROAD HARIDASPUR';
+    if (p.includes('CHANGRABANDHA') || p.includes('BURIMARI')) return 'BY ROAD CHANGRABANDHA';
+    if (p.includes('GEDE')) return 'BY RAIL GEDE';
+    if (p.includes('DAWKI')) return 'BY ROAD DAWKI';
+    if (p.includes('JAIGAON')) return 'BY ROAD JAIGAON';
+    if (p.includes('PHULBARI')) return 'BY ROAD PHULBARI';
+    if (p.includes('CCU') || p.includes('KOLKATA AIRPORT') || p.includes('DUM DUM') || p.includes('DELHI AIRPORT') || p.includes('AIR')) return 'BY AIR';
+    return port;
+  }
+
   if (clean.entrypoint && clean.entrypoint !== 'NILL') {
-    const ep = clean.entrypoint;
-    if (ep.includes('BENAPOLE') || ep.includes('GHOJADANGA')) clean.entrypoint = 'GHOJADANGA(BENAPOLE)';
-    else if (ep.includes('AGARTALA') || ep.includes('AKHAURA')) clean.entrypoint = 'AGARTALA';
-    else if (ep.includes('HILI')) clean.entrypoint = 'HILI ROAD';
-    else if (ep.includes('HARIDASPUR') || ep.includes('PETRAPOLE')) clean.entrypoint = 'BY ROAD HARIDASPUR';
-    else if (ep.includes('CHANGRABANDHA') || ep.includes('BURIMARI')) clean.entrypoint = 'CHANGRABANDHA';
-    else if (ep.includes('CCU') || ep.includes('KOLKATA AIRPORT') || ep.includes('DUM DUM')) clean.entrypoint = 'KOLKATA AIRPORT';
-    else if (ep.includes('DEL') || ep.includes('DELHI AIRPORT')) clean.entrypoint = 'DELHI AIRPORT';
+    clean.entrypoint = normalizePort(clean.entrypoint);
+  }
+  if (clean.exitpoint && clean.exitpoint !== 'NILL') {
+    clean.exitpoint = normalizePort(clean.exitpoint);
+  } else if (clean.entrypoint && clean.entrypoint !== 'NILL') {
+    clean.exitpoint = clean.entrypoint;
+  }
+
+  // No of Entries mapping
+  if (clean.visa_entry_id && clean.visa_entry_id !== 'NILL') {
+    const ve = String(clean.visa_entry_id).toUpperCase();
+    if (ve.includes('MULTI') || ve === '2') clean.visa_entry_id = '2';
+    else if (ve.includes('SING') || ve === '1') clean.visa_entry_id = '1';
+    else if (ve.includes('DOUB') || ve === '3') clean.visa_entry_id = '3';
+    else if (ve.includes('TRIP') || ve === '4') clean.visa_entry_id = '4';
+  } else {
+    clean.visa_entry_id = '2';
+  }
+
+  // Duration
+  if (!clean.duration || clean.duration === 'NILL') {
+    clean.duration = '24';
   }
 
   // 4. Identity marks default

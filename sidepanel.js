@@ -1,3 +1,33 @@
+function extractVisaDetailsFromText(text) {
+  if (!text) return {};
+  const res = {};
+  const exitMatch = text.match(/Port\s*of\s*Exit\s+([A-Za-z0-9\/\(\)\s\-]+?)(?=\s*(?:Required|Application|Places|Purpose|F\.|Previous|$))/i);
+  if (exitMatch) res.exitpoint = exitMatch[1].trim().replace(/\s+/g, ' ');
+
+  const entryMatch = text.match(/Port\s*Of\s*Arrival\s+([A-Za-z0-9\/\(\)\s\-]+?)(?=\s*Port\s*of\s*Exit)/i);
+  if (entryMatch) res.entrypoint = entryMatch[1].trim().replace(/\s+/g, ' ');
+
+  const entriesMatch = text.match(/No\s*of\s*Entries\s+([A-Za-z]+)/i);
+  if (entriesMatch) {
+    const raw = entriesMatch[1].trim().toUpperCase();
+    if (raw.includes('MULTI') || raw === '2') res.visa_entry_id = '2';
+    else if (raw.includes('SING') || raw === '1') res.visa_entry_id = '1';
+    else if (raw.includes('DOUB') || raw === '3') res.visa_entry_id = '3';
+    else if (raw.includes('TRIP') || raw === '4') res.visa_entry_id = '4';
+    else res.visa_entry_id = raw;
+  }
+
+  const durationMatch = text.match(/Period\s*of\s*Visa\s*\(\s*Month\s*\)\s+(\d+)/i);
+  if (durationMatch) res.duration = durationMatch[1].trim();
+
+  const journeyMatch = text.match(/Expected\s*Date\s*of\s*Journey\s+([0-9]{2}-[A-Za-z]{3}-[0-9]{4}|[0-9]{2}\/[0-9]{2}\/[0-9]{4})/i);
+  if (journeyMatch) res.jouryney_id = journeyMatch[1].trim();
+
+  const placesMatch = text.match(/Places\s*to\s*be\s*Visited\s+([A-Za-z0-9\s,]+?)(?=\s*\"\"|\s*Purpose|\s*NA)/i);
+  if (placesMatch) res.places_to_visit = placesMatch[1].trim();
+
+  return res;
+}
 
 function extractReferencesFromCoordinates(items, fullText) {
   let t = {
@@ -460,6 +490,14 @@ async function processSingleFile(file, mode, apiKey) {
     
     if (fullText.trim().length > 0) {
       extracted = await extractFromBGDText(apiKey, fullText);
+      const vDetails = extractVisaDetailsFromText(fullText);
+      if (vDetails.exitpoint && (!extracted.exitpoint || extracted.exitpoint === "NILL")) extracted.exitpoint = vDetails.exitpoint;
+      if (vDetails.entrypoint && (!extracted.entrypoint || extracted.entrypoint === "NILL")) extracted.entrypoint = vDetails.entrypoint;
+      if (vDetails.visa_entry_id && (!extracted.visa_entry_id || extracted.visa_entry_id === "NILL")) extracted.visa_entry_id = vDetails.visa_entry_id;
+      if (vDetails.duration && (!extracted.duration || extracted.duration === "NILL")) extracted.duration = vDetails.duration;
+      if (vDetails.jouryney_id && (!extracted.jouryney_id || extracted.jouryney_id === "NILL")) extracted.jouryney_id = vDetails.jouryney_id;
+      if (vDetails.places_to_visit && (!extracted.places_to_visit || extracted.places_to_visit === "NILL")) extracted.places_to_visit = vDetails.places_to_visit;
+      if (!extracted.exitpoint && extracted.entrypoint) extracted.exitpoint = extracted.entrypoint;
       // Dual reference coordinate enhancement
       if (Array.isArray(coordItems) && coordItems.length > 0) {
         const refData = extractReferencesFromCoordinates(coordItems, fullText);
