@@ -319,3 +319,67 @@ function setupSettingsModal() {
     };
   }
 }
+
+// THEME MANAGEMENT (Dark / Light Mode)
+function applyTheme(theme) {
+  if (typeof document === "undefined" || !document.body) return;
+  if (theme === "light") {
+    document.body.classList.add("light-mode");
+    document.body.classList.remove("dark-mode");
+  } else {
+    document.body.classList.remove("light-mode");
+    document.body.classList.add("dark-mode");
+  }
+  const btn = document.getElementById("themeToggleBtn");
+  if (btn) {
+    btn.textContent = theme === "light" ? "☀️" : "🌓";
+    btn.title = theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode";
+  }
+}
+
+async function initTheme() {
+  try {
+    const { iv_theme } = await chrome.storage.local.get(["iv_theme"]);
+    const isCloud = !!document.querySelector(".app-title");
+    const activeTheme = iv_theme || (isCloud ? "dark" : "light");
+    applyTheme(activeTheme);
+  } catch (e) {
+    console.error("Theme init error:", e);
+  }
+}
+
+function setupThemeToggle() {
+  const btn = document.getElementById("themeToggleBtn");
+  if (!btn) return;
+  btn.onclick = async () => {
+    try {
+      const isCurrentlyLight = document.body.classList.contains("light-mode");
+      const nextTheme = isCurrentlyLight ? "dark" : "light";
+      applyTheme(nextTheme);
+      await chrome.storage.local.set({ iv_theme: nextTheme });
+    } catch (e) {
+      console.error("Theme toggle error:", e);
+    }
+  };
+}
+
+initTheme();
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      initTheme();
+      setupThemeToggle();
+    });
+  } else {
+    setupThemeToggle();
+  }
+}
+
+if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged) {
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === "local" && changes.iv_theme) {
+      applyTheme(changes.iv_theme.newValue);
+    }
+  });
+}
+

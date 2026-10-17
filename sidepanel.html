@@ -263,6 +263,104 @@
             cursor: pointer; transition: all 0.2s;
         }
         .back-btn:hover { background: rgba(255,255,255,0.15); color: white; }
+    
+        /* LIGHT MODE OVERRIDES */
+        body.light-mode {
+            background: linear-gradient(160deg, #f8fafc 0%, #e2e8f0 40%, #cbd5e1 100%) !important;
+            color: #0f172a !important;
+        }
+        body.light-mode * {
+            text-shadow: none !important;
+        }
+        body.light-mode .app-header {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(241,245,249,0.95)) !important;
+            border-bottom: 1px solid rgba(0,0,0,0.15) !important;
+        }
+        body.light-mode .app-title {
+            background: linear-gradient(135deg, #312e81, #4c1d95, #701a75) !important;
+            -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important;
+        }
+        body.light-mode .app-version {
+            color: #334155 !important; background: rgba(0,0,0,0.1) !important;
+        }
+        body.light-mode .settings-btn, body.light-mode .icon-btn {
+            background: rgba(0,0,0,0.08) !important; color: #1e293b !important; border-color: rgba(0,0,0,0.15) !important;
+        }
+        body.light-mode .settings-btn:hover, body.light-mode .icon-btn:hover {
+            background: rgba(0,0,0,0.15) !important; color: #000 !important;
+        }
+        body.light-mode .card, body.light-mode .settings-panel {
+            background: rgba(255,255,255,0.9) !important;
+            border-color: rgba(0,0,0,0.15) !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+            color: #0f172a !important;
+        }
+        body.light-mode .card-label, body.light-mode .section-label, body.light-mode .settings-panel h4 {
+            color: #000 !important; font-weight: 800 !important;
+        }
+        body.light-mode label {
+            color: #000 !important; font-weight: 700 !important;
+        }
+        body.light-mode .search-box {
+            background: #ffffff !important;
+            border-color: rgba(0,0,0,0.2) !important;
+            color: #0f172a !important;
+        }
+        body.light-mode .search-box::placeholder { color: #94a3b8 !important; }
+        body.light-mode .edit-btn { background: #22c55e !important; color: white !important; }
+        body.light-mode .rename-btn { background: #6366f1 !important; color: white !important; }
+        body.light-mode .hide-btn { background: #94a3b8 !important; color: white !important; }
+        body.light-mode .del-btn { background: #ef4444 !important; color: white !important; }
+        body.light-mode .export-btn { background: #10b981 !important; color: white !important; }
+        body.light-mode .import-btn { background: #6366f1 !important; color: white !important; }
+        body.light-mode .show-btn { background: #eab308 !important; color: white !important; }
+        body.light-mode .hidden-link { color: #6366f1 !important; }
+        body.light-mode .toggle-container {
+            background: rgba(0,0,0,0.1) !important; border-color: rgba(0,0,0,0.15) !important;
+        }
+        body.light-mode .toggle-btn { color: #334155 !important; font-weight: 700 !important; }
+        body.light-mode .toggle-btn.active { color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important; }
+        body.light-mode .profile-item {
+            color: #000 !important; border-color: rgba(0,0,0,0.15) !important; font-weight: 700 !important;
+            background: #f8fafc !important;
+        }
+        body.light-mode .profile-item span {
+            color: #000 !important;
+        }
+        body.light-mode .profile-item:hover { background: rgba(0,0,0,0.05) !important; }
+        body.light-mode .profile-item.selected {
+            background: linear-gradient(135deg, rgba(79,70,229,0.15), rgba(124,58,237,0.15)) !important;
+            border-color: #4f46e5 !important;
+        }
+        body.light-mode #profileList, body.light-mode #hiddenProfileList, body.light-mode #tempIdsList, body.light-mode #tempIdList {
+            background: rgba(255,255,255,0.7) !important; border-color: rgba(0,0,0,0.15) !important;
+            color: #0f172a !important;
+        }
+        body.light-mode input[type="file"], body.light-mode select, body.light-mode textarea, body.light-mode input[type="text"], body.light-mode input[type="password"] {
+            background: #fff !important; border-color: rgba(0,0,0,0.3) !important; color: #000 !important;
+        }
+        body.light-mode .api-key-input {
+            background: #fff !important; color: #000 !important; border-color: rgba(0,0,0,0.3) !important;
+        }
+        body.light-mode .api-key-help { color: #334155 !important; }
+        body.light-mode .back-btn {
+            background: rgba(255,255,255,0.9) !important; color: #0f172a !important; border-color: rgba(0,0,0,0.2) !important;
+            font-weight: 700 !important;
+        }
+        body.light-mode .back-btn:hover {
+            background: #fff !important; color: #000 !important; box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+        }
+        body.light-mode .footer { color: #475569 !important; font-weight: 600 !important; }
+        body.light-mode .key-status { color: #0f172a !important; font-weight: 600 !important; }
+        body.light-mode .free-banner {
+            background: rgba(99,102,241,0.08) !important;
+            border-color: rgba(99,102,241,0.2) !important;
+            color: #4338ca !important;
+        }
+        body.light-mode details summary {
+            color: #4f46e5 !important;
+        }
+
     </style>
     <script src="lib/firebase-app-compat.js"></script>
     <script src="lib/firebase-auth-compat.js"></script>
@@ -302,6 +400,7 @@
                 <a id="followBtn" href="https://www.facebook.com/AverageStudentbd" target="_blank" class="icon-btn fb-btn" title="Follow on Facebook">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                 </a>
+                <button id="themeToggleBtn" class="settings-btn" title="Toggle Light/Dark Mode" style="font-size:12px;">🌓</button>
                 <button id="adminBtn" class="icon-btn" title="Admin Dashboard" style="display:none;">👑</button>
                 <button id="logoutBtn" class="icon-btn" title="Logout">🚪</button>
                 <button id="settingsToggleBtn" class="settings-btn" title="Settings">⚙</button>
