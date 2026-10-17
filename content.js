@@ -507,26 +507,30 @@ async function setField(ids, val, defaultVal = "") {
       // 3. Father's Details
       const fatherName = n.fthrname || n.father_name || n.fatherName;
       const fatherNat = n.father_nationality || "BANGLADESH";
-      const fatherPrevNat = n.father_previous_nationality || n.father_prev_nationality || fatherNat || "BANGLADESH";
+      const fatherPrevNat = n.father_previous_nationality || n.father_prev_nationality || "";
       const fatherPob = n.father_place_of_birth || n.father_pob || n.pobTown || "";
       const fatherCob = n.father_country_of_birth || n.father_cob || fatherNat || "BANGLADESH";
 
       await setField(["fthrname", "father_name", "appl.fthrname", "appl.father_name", "fatherName"], fatherName);
       await setField(["father_nationality", "appl.father_nationality", "father_nat"], fatherNat, "BANGLADESH");
-      await setField(["father_previous_nationality", "father_prev_nationality", "appl.father_previous_nationality", "appl.father_prev_nationality"], fatherPrevNat, "BANGLADESH");
+      if (fatherPrevNat && !["NILL", "NA", "UNKNOWN", "NULL"].includes(fatherPrevNat.toUpperCase()) && fatherPrevNat.toUpperCase() !== fatherNat.toUpperCase()) {
+        await setField(["father_previous_nationality", "father_prev_nationality", "appl.father_previous_nationality", "appl.father_prev_nationality"], fatherPrevNat);
+      }
       await setField(["father_place_of_birth", "father_pob", "appl.father_place_of_birth", "appl.father_pob", "father_birth_place"], fatherPob);
       await setField(["father_country_of_birth", "father_cob", "appl.father_country_of_birth", "appl.father_cob", "father_birth_country"], fatherCob, "BANGLADESH");
 
       // 4. Mother's Details
       const motherName = n.mother_name || n.mthrname || n.motherName;
       const motherNat = n.mother_nationality || fatherNat || "BANGLADESH";
-      const motherPrevNat = n.mother_previous_nationality || n.mother_prev_nationality || motherNat || "BANGLADESH";
+      const motherPrevNat = n.mother_previous_nationality || n.mother_prev_nationality || "";
       const motherPob = n.mother_place_of_birth || n.mother_pob || n.pobTown || "";
       const motherCob = n.mother_country_of_birth || n.mother_cob || motherNat || "BANGLADESH";
 
       await setField(["mother_name", "mthrname", "appl.mother_name", "appl.mthrname", "motherName"], motherName);
       await setField(["mother_nationality", "appl.mother_nationality", "mother_nat"], motherNat, "BANGLADESH");
-      await setField(["mother_previous_nationality", "mother_prev_nationality", "appl.mother_previous_nationality", "appl.mother_prev_nationality"], motherPrevNat, "BANGLADESH");
+      if (motherPrevNat && !["NILL", "NA", "UNKNOWN", "NULL"].includes(motherPrevNat.toUpperCase()) && motherPrevNat.toUpperCase() !== motherNat.toUpperCase()) {
+        await setField(["mother_previous_nationality", "mother_prev_nationality", "appl.mother_previous_nationality", "appl.mother_prev_nationality"], motherPrevNat);
+      }
       await setField(["mother_place_of_birth", "mother_pob", "appl.mother_place_of_birth", "appl.mother_pob", "mother_birth_place"], motherPob);
       await setField(["mother_country_of_birth", "mother_cob", "appl.mother_country_of_birth", "appl.mother_cob", "mother_birth_country"], motherCob, "BANGLADESH");
 
@@ -551,13 +555,15 @@ async function setField(ids, val, defaultVal = "") {
         await new Promise(r => setTimeout(r, 350));
 
         const spouseNat = n.spouse_nationality || fatherNat || "BANGLADESH";
-        const spousePrevNat = n.spouse_previous_nationality || n.spouse_prev_nationality || spouseNat || "BANGLADESH";
+        const spousePrevNat = n.spouse_previous_nationality || n.spouse_prev_nationality || "";
         const spousePob = n.spouse_place_of_birth || n.spouse_pob || fatherPob || n.pobTown || "";
         const spouseCob = n.spouse_country_of_birth || n.spouse_cob || spouseNat || "BANGLADESH";
 
         await setField(["spouse_name", "appl.spouse_name", "spousename", "spouseName"], spouseNameVal);
         await setField(["spouse_nationality", "appl.spouse_nationality", "spouse_nat"], spouseNat, "BANGLADESH");
-        await setField(["spouse_previous_nationality", "spouse_prev_nationality", "appl.spouse_previous_nationality", "appl.spouse_prev_nationality"], spousePrevNat, "BANGLADESH");
+        if (spousePrevNat && !["NILL", "NA", "UNKNOWN", "NULL"].includes(spousePrevNat.toUpperCase()) && spousePrevNat.toUpperCase() !== spouseNat.toUpperCase()) {
+          await setField(["spouse_previous_nationality", "spouse_prev_nationality", "appl.spouse_previous_nationality", "appl.spouse_prev_nationality"], spousePrevNat);
+        }
         await setField(["spouse_place_of_birth", "spouse_pob", "appl.spouse_place_of_birth", "appl.spouse_pob", "spouse_birth_place"], spousePob);
         await setField(["spouse_country_of_birth", "spouse_cob", "appl.spouse_country_of_birth", "appl.spouse_cob", "spouse_birth_country"], spouseCob, "BANGLADESH");
       }

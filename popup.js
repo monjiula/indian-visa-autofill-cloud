@@ -113,17 +113,17 @@ function extractVisaDetailsFromText(text) {
 
   res.father_place_of_birth = res.pobTown || "";
   res.father_nationality = "BANGLADESH";
-  res.father_previous_nationality = "BANGLADESH";
+  res.father_previous_nationality = "";
   res.father_country_of_birth = "BANGLADESH";
 
   res.mother_place_of_birth = res.pobTown || "";
   res.mother_nationality = "BANGLADESH";
-  res.mother_previous_nationality = "BANGLADESH";
+  res.mother_previous_nationality = "";
   res.mother_country_of_birth = "BANGLADESH";
 
   res.spouse_place_of_birth = res.pobTown || "";
   res.spouse_nationality = "BANGLADESH";
-  res.spouse_previous_nationality = "BANGLADESH";
+  res.spouse_previous_nationality = "";
   res.spouse_country_of_birth = "BANGLADESH";
 
   return res;

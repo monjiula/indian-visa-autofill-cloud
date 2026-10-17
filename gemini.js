@@ -134,18 +134,18 @@ Carefully extract the following and map to the JSON schema:
 - Family: 
   * fthrname: Father's Name
   * father_nationality: Father's Nationality (default "BANGLADESH")
-  * father_previous_nationality: Father's Previous Nationality (default "BANGLADESH")
+  * father_previous_nationality: Father's Previous Nationality (leave empty or "" if none or same as nationality)
   * father_place_of_birth: Father's Place of Birth
   * father_country_of_birth: Father's Country of Birth (default "BANGLADESH")
   * mother_name: Mother's Name
   * mother_nationality: Mother's Nationality (default "BANGLADESH")
-  * mother_previous_nationality: Mother's Previous Nationality (default "BANGLADESH")
+  * mother_previous_nationality: Mother's Previous Nationality (leave empty or "" if none or same as nationality)
   * mother_place_of_birth: Mother's Place of Birth
   * mother_country_of_birth: Mother's Country of Birth (default "BANGLADESH")
   * marital_status: "0" (Married), "1" (Single)
   * spouse_name: Spouse's Name
   * spouse_nationality: Spouse's Nationality (default "BANGLADESH")
-  * spouse_previous_nationality: Spouse's Previous Nationality (default "BANGLADESH")
+  * spouse_previous_nationality: Spouse's Previous Nationality (leave empty or "" if none or same as nationality)
   * spouse_place_of_birth: Spouse's Place of Birth
   * spouse_country_of_birth: Spouse's Country of Birth (default "BANGLADESH")
 - Employment: Occupation, Employer Name, Designation, Address, Phone.
@@ -302,6 +302,21 @@ function postProcessData(data) {
     if (!clean.spouse_nationality || clean.spouse_nationality === 'NILL') clean.spouse_nationality = 'BANGLADESH';
     if (!clean.spouse_country_of_birth || clean.spouse_country_of_birth === 'NILL') clean.spouse_country_of_birth = 'BANGLADESH';
   }
+
+  // Clear previous nationality if NILL, NONE, empty, or same as current nationality
+  ['father', 'mother', 'spouse'].forEach(p => {
+    const prevKey = `${p}_previous_nationality`;
+    const natKey = `${p}_nationality`;
+    if (clean[prevKey]) {
+      const pVal = String(clean[prevKey]).trim().toUpperCase();
+      const nVal = String(clean[natKey] || '').trim().toUpperCase();
+      if (!pVal || ['NILL', 'NONE', 'NA', 'NULL', 'NO', 'UNKNOWN'].includes(pVal) || pVal === nVal) {
+        clean[prevKey] = '';
+      }
+    } else {
+      clean[prevKey] = '';
+    }
+  });
 
   return clean;
 }
