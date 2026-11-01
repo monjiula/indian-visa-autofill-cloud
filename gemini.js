@@ -10,8 +10,15 @@
 
 // ─── Configuration ────────────────────────────────────────────
 
-// GEMINI_MODEL is now dynamically fetched. Fallback:
+// GEMINI_MODEL is dynamically managed with automatic quota fallback. Default:
 const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
+
+// Fallback chain when a model reaches free-tier quota limits (e.g., 20 req/day on 3.6-flash)
+const CANDIDATE_MODELS = [
+  'gemini-3.6-flash',
+  'gemini-1.5-flash',
+  'gemini-2.5-flash'
+];
 
 // ─── JSON Schema for structured output ────────────────────────
 
@@ -321,48 +328,201 @@ function postProcessData(data) {
   return clean;
 }
 
-// ─── API Invocation with Retry Logic ──────────────────────────
+// ─── API Invocation with Model Fallback & Key Rotation ────────
 
-async function fetchWithRetry(apiKey, body, model, maxRetries = 2) {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-  let attempt = 0;
-  while (attempt <= maxRetries) {
-    try {
-      const response = await fetch(`${endpoint}?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMsg = errorData?.error?.message || `API Error ${response.status}`;
-        
-        if (response.status === 429 || response.status >= 500) {
-          throw new Error(`Transient Error: ${errorMsg}`); // Will be caught and retried
-        }
-        if (response.status === 400 && errorMsg.includes('API key')) {
-          throw new Error('Invalid API Key. Please check your Gemini API key in Settings.', { cause: 'FATAL' });
-        }
-        if (response.status === 403) {
-          throw new Error('API key not authorized. Please get a new key from aistudio.google.com/apikey', { cause: 'FATAL' });
-        }
-        throw new Error(errorMsg, { cause: 'FATAL' });
+export function parseApiKeys(rawKey) {
+  if (!rawKey || typeof rawKey !== 'string') return [];
+  const tokens = rawKey.split(/[\r\n,;]+/).map(s => s.trim()).filter(Boolean);
+  const keys = [];
+  for (const t of tokens) {
+    const subs = t.split(/\s+/).map(s => s.trim()).filter(Boolean);
+    for (const sub of subs) {
+      if (sub.length >= 20) {
+        keys.push(sub);
       }
-
-      const data = await response.json();
-      return parseGeminiResponse(data);
-
-    } catch (err) {
-      if (err.cause === 'FATAL' || attempt === maxRetries) {
-        throw err;
-      }
-      attempt++;
-      console.warn(`[Gemini] API Call failed, retrying (${attempt}/${maxRetries})...`, err);
-      // Exponential backoff: 1000ms, 3000ms
-      await new Promise(r => setTimeout(r, attempt === 1 ? 1000 : 3000));
     }
   }
+  return keys.length > 0 ? keys : (rawKey.trim() ? [rawKey.trim()] : []);
+}
+
+let cachedAvailableModels = null;
+let lastModelFetchTime = 0;
+
+export async function fetchAvailableModels(apiKey) {
+  const now = Date.now();
+  if (cachedAvailableModels && (now - lastModelFetchTime < 300000)) {
+    return cachedAvailableModels;
+  }
+  const keys = parseApiKeys(apiKey);
+  const keyToUse = keys[0] || (apiKey || '').trim();
+  if (!keyToUse) return [];
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${keyToUse}`, {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!data.models || !Array.isArray(data.models)) return [];
+
+    const valid = data.models
+      .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+      .map(m => m.name.replace(/^models\//, ''))
+      .filter(name => !name.includes('embedding') && !name.includes('aqa') && !name.includes('imagen'));
+
+    if (valid.length > 0) {
+      cachedAvailableModels = valid;
+      lastModelFetchTime = now;
+      console.log('[Gemini] Available models dynamically discovered from Google AI Studio:', valid);
+      return valid;
+    }
+  } catch (err) {
+    // Silently continue if models query fails or times out
+  }
+  return [];
+}
+
+function getModelOrder(preferredModel, dynamicModels = []) {
+  const list = [];
+  if (preferredModel) {
+    list.push(preferredModel);
+  }
+
+  if (Array.isArray(dynamicModels) && dynamicModels.length > 0) {
+    const flashModels = dynamicModels.filter(m => /flash/i.test(m) && !list.includes(m));
+    list.push(...flashModels.slice(0, 2));
+  } else {
+    for (const m of CANDIDATE_MODELS) {
+      if (!list.includes(m)) {
+        list.push(m);
+      }
+    }
+  }
+
+  // Maximum 2 attempts so extraction never hangs or wastes time on repeated 404s
+  return list.slice(0, 2);
+}
+
+async function executeGeminiCall(rawApiKey, body, preferredModel, isStructuredJson = true, onProgress = null) {
+  const keys = parseApiKeys(rawApiKey);
+  if (keys.length === 0) {
+    throw new Error('No Gemini API key provided. Please set your API key in ⚙️ Settings.');
+  }
+
+  if (typeof onProgress === 'function') onProgress('Connecting to Gemini AI...');
+
+  const dynamicModels = await fetchAvailableModels(keys[0]);
+  const modelCandidates = getModelOrder(preferredModel, dynamicModels);
+  let lastError = null;
+  let quotaHitCount = 0;
+  let quotaRetryDetails = '';
+
+  for (let mIdx = 0; mIdx < modelCandidates.length; mIdx++) {
+    const model = modelCandidates[mIdx];
+    for (let kIdx = 0; kIdx < keys.length; kIdx++) {
+      const key = keys[kIdx];
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+      
+      try {
+        if (typeof onProgress === 'function') {
+          onProgress(`Processing with ${model}...`);
+        }
+        console.log(`[Gemini] Calling ${model} with key (${key.slice(0, 6)}...)...`);
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 18000);
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          // If we fell back to a working model, save it so future calls start directly with it
+          if (model !== preferredModel) {
+            console.log(`[Gemini] Switched active model from ${preferredModel} to working model ${model}.`);
+            saveAdvancedSettings({ iv_model: model }).catch(() => {});
+          }
+          if (isStructuredJson) {
+            return parseGeminiResponse(data);
+          } else {
+            const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            return rawText.trim();
+          }
+        }
+
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData?.error?.message || `API Error ${response.status}`;
+        const isQuotaError = response.status === 429 || 
+                             /quota|resource_exhausted|rate-limit|exceeded|free_tier_requests/i.test(errorMsg);
+        const isModelNotFoundError = response.status === 404;
+        const isAuthError = (response.status === 400 && errorMsg.includes('API key')) || response.status === 403;
+
+        if (isQuotaError) {
+          quotaHitCount++;
+          console.warn(`[Gemini] Quota limit reached on ${model} with key (${key.slice(0, 6)}...): ${errorMsg}. Attempting fallback...`);
+          const retryMatch = errorMsg.match(/retry in ([^.]+)/i);
+          if (retryMatch) {
+            quotaRetryDetails = ` (রিসেট হতে বাকি: ${retryMatch[1].trim()})`;
+          }
+          lastError = new Error(`Quota limit reached on ${model}: ${errorMsg}`);
+
+          if (typeof onProgress === 'function') {
+            if (kIdx + 1 < keys.length) {
+              onProgress('Key quota full, trying backup key...');
+            } else if (mIdx + 1 < modelCandidates.length) {
+              onProgress(`${model} quota full, checking fallback...`);
+            }
+          }
+          continue;
+        }
+
+        if (isModelNotFoundError) {
+          console.warn(`[Gemini] Model ${model} not available (404). Trying next model candidate...`);
+          lastError = new Error(`Model ${model} not found`);
+          break; // Break key loop, move to next model candidate
+        }
+
+        if (isAuthError) {
+          console.warn(`[Gemini] Auth error with key (${key.slice(0, 6)}...): ${errorMsg}`);
+          lastError = new Error(`Invalid/unauthorized API key: ${errorMsg}`);
+          continue; // Try next key if provided
+        }
+
+        if (response.status >= 500) {
+          console.warn(`[Gemini] Server error on ${model} (${response.status}), trying fallback...`);
+          lastError = new Error(`Server error on ${model}: ${errorMsg}`);
+          continue;
+        }
+
+        lastError = new Error(errorMsg);
+
+      } catch (netErr) {
+        console.warn(`[Gemini] Network error contacting ${model}: ${netErr.message}`);
+        lastError = netErr;
+      }
+    }
+  }
+
+  // If we reach here, all combinations of keys and models failed
+  if (quotaHitCount > 0) {
+    throw new Error(
+      `QUOTA_EXCEEDED: Gemini Free Tier Quota Exceeded (আজকের ফ্রি কোটা শেষ হয়ে গেছে)${quotaRetryDetails}।`
+    );
+  }
+
+  throw lastError || new Error('Failed to communicate with Gemini API.');
+}
+
+async function fetchWithRetry(apiKey, body, model) {
+  return await executeGeminiCall(apiKey, body, model, true);
 }
 
 // ─── Core API Call Functions ──────────────────────────────────
@@ -399,7 +559,9 @@ export async function saveApiKey(key) {
 export async function getAdvancedSettings() {
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
     const settings = await chrome.storage.local.get(['iv_model', 'iv_promptBGD', 'iv_promptPassport', 'iv_autoDeleteDays', 'iv_fillMissingOnly']);
-    if (['gemini-1.5-flash', 'gemini-2.5-flash', 'gemini-flash-latest'].includes(settings.iv_model)) settings.iv_model = DEFAULT_GEMINI_MODEL;
+    if (!settings.iv_model) {
+      settings.iv_model = DEFAULT_GEMINI_MODEL;
+    }
     return settings;
   }
   return {};
@@ -417,7 +579,7 @@ export async function saveAdvancedSettings(settings) {
 
 export { DEFAULT_GEMINI_MODEL };
 
-async function callGeminiText(apiKey, promptText) {
+async function callGeminiText(apiKey, promptText, onProgress) {
   const settings = await getAdvancedSettings();
   const model = settings.iv_model || DEFAULT_GEMINI_MODEL;
   
@@ -430,18 +592,19 @@ async function callGeminiText(apiKey, promptText) {
       responseSchema: VISA_FIELDS_SCHEMA
     }
   };
-  return await fetchWithRetry(apiKey, body, model);
+  return await executeGeminiCall(apiKey, body, model, true, onProgress);
 }
 
-async function callGeminiVision(apiKey, base64Image, mimeType, promptText) {
+async function callGeminiVision(apiKey, base64Image, mimeType, promptText, onProgress) {
   const settings = await getAdvancedSettings();
   const model = settings.iv_model || DEFAULT_GEMINI_MODEL;
+  const cleanBase64 = String(base64Image).replace(/^data:image\/[a-zA-Z+]+;base64,/, '').trim();
 
   const body = {
     system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
     contents: [{
       parts: [
-        { inlineData: { mimeType: mimeType, data: base64Image } },
+        { inlineData: { mimeType: mimeType || 'image/jpeg', data: cleanBase64 } },
         { text: promptText }
       ]
     }],
@@ -451,7 +614,7 @@ async function callGeminiVision(apiKey, base64Image, mimeType, promptText) {
       responseSchema: VISA_FIELDS_SCHEMA
     }
   };
-  return await fetchWithRetry(apiKey, body, model);
+  return await executeGeminiCall(apiKey, body, model, true, onProgress);
 }
 
 // ─── Response Parsing ─────────────────────────────────────────
@@ -489,7 +652,7 @@ function parseGeminiResponse(apiResponse) {
 
 // ─── Public API ───────────────────────────────────────────────
 
-export async function extractFromBGDText(apiKey, pdfText) {
+export async function extractFromBGDText(apiKey, pdfText, onProgress) {
   if (!apiKey) throw new Error('No API key. Please set your Gemini API key in ⚙️ Settings.');
   if (!pdfText || pdfText.trim().length === 0) {
     throw new Error('No text found in PDF. This might be a scanned PDF — try using PASSPORT mode instead.');
@@ -500,22 +663,86 @@ export async function extractFromBGDText(apiKey, pdfText) {
   
   console.log(`[Gemini] Extracted ${pdfText.trim().length} characters from PDF`);
   const prompt = customPrompt + pdfText;
-  return await callGeminiText(apiKey, prompt);
+  return await callGeminiText(apiKey, prompt, onProgress);
 }
 
-export async function extractFromPassport(apiKey, base64Data, mimeType) {
+export async function extractFromPassport(apiKey, base64Data, mimeType, onProgress) {
   if (!apiKey) throw new Error('No API key. Please set your Gemini API key in ⚙️ Settings.');
   if (!base64Data) throw new Error('No file data provided.');
   
   const settings = await getAdvancedSettings();
   const customPrompt = settings.iv_promptPassport ? settings.iv_promptPassport : PASSPORT_PROMPT;
 
-  return await callGeminiVision(apiKey, base64Data, mimeType, customPrompt);
+  return await callGeminiVision(apiKey, base64Data, mimeType, customPrompt, onProgress);
 }
 
 export async function testApiKey(apiKey) {
-  // Temporary bypass: Always accept the API key since the validation endpoint might be failing or caching old models in the extension context.
-  return true;
+  try {
+    const keys = parseApiKeys(apiKey);
+    const keyToTest = keys[0] || (apiKey || '').trim();
+    if (!keyToTest) return { ok: false, status: 'invalid', message: 'No API key provided.' };
+
+    const modelsList = await fetchAvailableModels(keyToTest);
+    const settings = await getAdvancedSettings();
+    const modelCandidates = getModelOrder(settings.iv_model || DEFAULT_GEMINI_MODEL, modelsList);
+    
+    let hadQuotaExceeded = false;
+    let quotaErrorDetails = '';
+
+    for (const model of modelCandidates) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${keyToTest}`;
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'Ping' }] }],
+            generationConfig: { maxOutputTokens: 5 }
+          })
+        });
+
+        if (response.ok) {
+          return { 
+            ok: true, 
+            status: 'active', 
+            message: `Key Active & Working (${model})! ✓`,
+            model: model,
+            availableModels: modelsList 
+          };
+        }
+
+        if (response.status === 429) {
+          hadQuotaExceeded = true;
+          const errJson = await response.json().catch(() => ({}));
+          const msg = errJson?.error?.message || '';
+          const match = msg.match(/retry in ([^.]+)/i);
+          if (match) quotaErrorDetails = ` (${match[1].trim()} বাকি)`;
+          continue;
+        }
+
+        if (response.status === 400 || response.status === 403) {
+          const errJson = await response.json().catch(() => ({}));
+          const msg = errJson?.error?.message || '';
+          if (msg.includes('API key')) {
+            return { ok: false, status: 'invalid', message: 'Invalid API key.' };
+          }
+        }
+      } catch {}
+    }
+
+    if (hadQuotaExceeded) {
+      return {
+        ok: false,
+        status: 'quota_exceeded',
+        message: `Free Quota Exceeded (429)${quotaErrorDetails}. Create a key in a NEW Project on AI Studio.`,
+        availableModels: modelsList
+      };
+    }
+
+    return { ok: true, status: 'active', message: 'Key Verified! ✓', availableModels: modelsList };
+  } catch (err) {
+    return { ok: false, status: 'error', message: err.message || 'Connection error.' };
+  }
 }
 
 export async function solveCaptcha(base64Data, mimeType = "image/png") {
@@ -523,7 +750,6 @@ export async function solveCaptcha(base64Data, mimeType = "image/png") {
   if (!apiKey) throw new Error("No Gemini API key found. Please save your API key in Settings.");
   const settings = await getAdvancedSettings();
   const model = settings.iv_model || DEFAULT_GEMINI_MODEL;
-  const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent";
   
   const cleanBase64 = String(base64Data).replace(/^data:image\/[a-zA-Z+]+;base64,/, '').trim();
   
@@ -539,38 +765,6 @@ export async function solveCaptcha(base64Data, mimeType = "image/png") {
     }
   };
 
-  let response;
-  try {
-    response = await fetch(endpoint + "?key=" + apiKey.trim(), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-  } catch (netErr) {
-    throw new Error("Network error contacting Gemini API: " + netErr.message);
-  }
-
-  if (!response.ok) {
-    const errJson = await response.json().catch(() => ({}));
-    const errMsg = errJson?.error?.message || `Status ${response.status}`;
-    if (response.status === 404 && model !== 'gemini-2.5-flash') {
-      console.warn(`[Gemini Captcha] Model ${model} returned 404, attempting fallback to gemini-2.5-flash...`);
-      const fallbackEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-      const fallbackRes = await fetch(fallbackEndpoint + "?key=" + apiKey.trim(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      if (fallbackRes.ok) {
-        const fbData = await fallbackRes.json();
-        const fbText = fbData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        return fbText.trim().replace(/[^a-zA-Z0-9]/g, "");
-      }
-    }
-    throw new Error("Captcha solve failed (" + response.status + "): " + errMsg);
-  }
-
-  const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  return text.trim().replace(/[^a-zA-Z0-9]/g, "");
+  const rawText = await executeGeminiCall(apiKey, body, model, false);
+  return rawText.trim().replace(/[^a-zA-Z0-9]/g, "");
 }

@@ -26,8 +26,14 @@ chrome.runtime.onMessage.addListener((e, t, n) => {
         func: (e, s) => {
           const t = typeof jQuery !== "undefined" ? jQuery : typeof $ !== "undefined" ? $ : null;
           if (t) {
-            const n = t("#" + e);
-            n.length && n.val(s).trigger("chosen:updated").trigger("change");
+            let n = t("#" + e);
+            if (!n.length) n = t(`[name="${e}"]`);
+            if (!n.length && (e === "nationality_id" || e === "nationality")) {
+              n = t('#nationality_id, #nationality, select[name="nationality_id"], select[name="nationality"]');
+            }
+            if (n.length) {
+              n.val(s).trigger("chosen:updated").trigger("change");
+            }
           }
         },
         args: [e.id, e.value],

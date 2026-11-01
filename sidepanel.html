@@ -1,640 +1,1157 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>IV Autofill Side Panel</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            background: linear-gradient(160deg, #0f0c29 0%, #1a1a3e 40%, #24243e 100%);
-            color: #e0e0e0; padding: 0; min-height: 100vh;
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            --primary-hover: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+            --primary-solid: #4f46e5;
+            --success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --success-hover: linear-gradient(135deg, #059669 0%, #047857 100%);
+            --success-solid: #10b981;
+            --danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            --danger-hover: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            --warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --bg-main: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.02);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .hidden { display: none !important; }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
 
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            overflow-x: hidden;
+        }
 
-        .app-wrapper { padding: 16px; }
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            padding: 12px;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* UTILS */
+        .hidden {
+            display: none !important;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 14px;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(99, 102, 241, 0.05);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 11px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            transition: var(--transition);
+            font-size: 13.5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 0.2px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-matte-black {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25) !important;
+            border: 1px solid #1a202c !important;
+            font-size: 13px !important;
+            padding: 6.5px 8px !important;
+            border-radius: 6px !important;
+            margin-top: 8px !important;
+            font-weight: bold !important;
+            width: 100% !important;
+            cursor: pointer !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: var(--transition) !important;
+        }
+
+        .btn-matte-black:hover {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35) !important;
+            transform: translateY(-1px) !important;
+        }
 
         /* HEADER */
         .app-header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 16px 18px;
-            background: linear-gradient(135deg, rgba(99,102,241,0.4), rgba(168,85,247,0.35));
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            backdrop-filter: blur(20px);
-        }
-        .app-title {
-            font-size: 16px; font-weight: 800; letter-spacing: -0.3px;
-            background: linear-gradient(135deg, #c7d2fe, #a78bfa, #f0abfc);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .app-version {
-            font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.35);
-            background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 6px;
-            margin-left: 8px;
-        }
-        .header-actions { display: flex; align-items: center; gap: 8px; }
-        .icon-btn {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 32px; height: 32px; border-radius: 8px; border: none;
-            cursor: pointer; transition: all 0.2s; text-decoration: none;
-        }
-        .fb-btn {
-            background: rgba(24,119,242,0.25); color: #7db4fc;
-            border: 1px solid rgba(24,119,242,0.2);
-        }
-        .fb-btn:hover { background: rgba(24,119,242,0.4); transform: scale(1.08); }
-        .settings-btn {
-            background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6);
-            width: 32px; height: 32px; border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
-            font-size: 16px; transition: all 0.2s;
-            display: inline-flex; align-items: center; justify-content: center;
-        }
-        .settings-btn:hover { background: rgba(255,255,255,0.12); color: #fff; transform: scale(1.08); }
-
-        /* FREE BANNER */
-        .free-banner {
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(16,185,129,0.15));
-            border: 1px solid rgba(34,197,94,0.2); border-radius: 12px;
-            padding: 10px; margin-bottom: 16px; font-size: 12px; font-weight: 700;
-            color: #86efac; letter-spacing: 0.3px;
-            animation: glow 3s ease-in-out infinite;
-        }
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 8px rgba(34,197,94,0.1); }
-            50% { box-shadow: 0 0 16px rgba(34,197,94,0.2); }
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            background: var(--card-bg);
+            padding: 10px 16px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
         }
 
-        /* CARDS */
-        .card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 14px; padding: 16px; margin-bottom: 14px;
-            backdrop-filter: blur(10px); transition: border-color 0.3s;
-        }
-        .card:hover { border-color: rgba(255,255,255,0.12); }
-        .card-label {
-            font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.5);
-            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .card-label .step {
-            background: linear-gradient(135deg, #6366f1, #a78bfa);
-            color: white; width: 22px; height: 22px; border-radius: 7px;
-            display: inline-flex; align-items: center; justify-content: center;
-            font-size: 11px; font-weight: 800;
+        #userNameDisplay {
+            background: #f1f5f9;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid transparent;
         }
 
-        /* TOGGLE */
-        .toggle-container {
-            display: flex; background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 14px; padding: 4px; margin-bottom: 16px; position: relative;
-        }
-        .toggle-btn {
-            flex: 1; text-align: center; padding: 10px; cursor: pointer;
-            font-size: 13px; font-weight: 700; z-index: 2;
-            border: none; background: transparent; color: rgba(255,255,255,0.4);
-            transition: color 0.3s; letter-spacing: 0.3px;
-        }
-        .toggle-btn.active { color: #fff; }
-        .toggle-btn:hover:not(.active) { color: rgba(255,255,255,0.6); }
-        #toggle-slider {
-            position: absolute; top: 4px; left: 4px;
-            width: calc(50% - 4px); height: calc(100% - 8px);
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border-radius: 11px; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-            z-index: 1; box-shadow: 0 2px 8px rgba(99,102,241,0.35);
+        #userNameDisplay:hover {
+            background: #e2e8f0;
+            color: var(--text-main);
+            border-color: #cbd5e1;
         }
 
-        /* FILE INPUT */
-        input[type="file"] {
-            width: 100%; padding: 10px; margin-top: 8px;
-            background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.15);
-            border-radius: 10px; color: #aaa; font-size: 12px; cursor: pointer;
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        input[type="file"]:hover { border-color: rgba(255,255,255,0.3); }
-
-        .progress-bar {
-            width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 8px;
-            overflow: hidden; display: none;
-        }
-        .progress-bar-fill {
-            height: 100%; background: linear-gradient(90deg, #6366f1, #10b981); width: 0%; transition: width 0.3s;
-        }
-
-        /* SEARCH */
-        .search-box {
-            width: 100%; padding: 9px 12px; margin-bottom: 10px;
-            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 10px; color: #c7d2fe; font-size: 12px;
-            font-family: 'Inter', sans-serif; outline: none; transition: all 0.2s;
-        }
-        .search-box::placeholder { color: rgba(255,255,255,0.2); }
-        .search-box:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.15); }
 
         /* BUTTONS */
-        .btn {
-            width: 100%; padding: 12px; border: none; border-radius: 12px;
-            font-weight: 700; cursor: pointer; color: white; font-size: 13px;
-            letter-spacing: 0.3px; transition: all 0.25s; position: relative; overflow: hidden;
+        .icon-btn,
+        .text-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            cursor: pointer;
+            border-radius: 8px;
+            border: none;
+            transition: var(--transition);
         }
-        .btn::after {
-            content: ''; position: absolute; top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-            transition: 0.5s;
-        }
-        .btn:hover::after { left: 100%; }
-        .btn-extract {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            box-shadow: 0 3px 12px rgba(99,102,241,0.3);
-        }
-        .btn-extract:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(99,102,241,0.4); }
-        .btn-passport {
-            background: linear-gradient(135deg, #059669, #10b981);
-            box-shadow: 0 3px 12px rgba(16,185,129,0.3);
-        }
-        .btn-passport:hover { transform: translateY(-1px); }
-        .btn-autofill {
-            background: linear-gradient(135deg, #059669, #34d399);
-            box-shadow: 0 3px 12px rgba(52,211,153,0.3);
-            margin-top: 14px; font-size: 14px; padding: 13px;
-        }
-        .btn-autofill:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(52,211,153,0.4); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
 
-        /* PROFILE LIST */
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .fb-btn {
+            background-color: #1877F2;
+            color: white;
+            padding: 6px;
+            width: 32px;
+            height: 32px;
+            box-shadow: 0 2px 4px rgba(24, 119, 242, 0.2);
+        }
+
+        .fb-btn:hover {
+            background-color: #166fe5;
+            transform: translateY(-1px);
+        }
+
+        .gold-btn {
+            background: var(--warning);
+            color: #ffffff;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+        }
+
+        .gold-btn:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            transform: translateY(-1px);
+        }
+
+        .credits-pill {
+            font-size: 12px;
+            font-weight: 700;
+            color: #065f46;
+            background: #d1fae5;
+            padding: 5px 12px;
+            border-radius: 20px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid #a7f3d0;
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3);
+            }
+
+            70% {
+                box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .logout-link {
+            cursor: pointer;
+            color: #ef4444;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            margin-left: 4px;
+            transition: var(--transition);
+        }
+
+        .logout-link:hover {
+            color: #b91c1c;
+            text-decoration: underline;
+        }
+
+        /* SEARCH & LIST */
+        .search-box {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+            font-size: 13px;
+            font-family: inherit;
+            background-color: #f8fafc;
+            transition: var(--transition);
+        }
+
+        .search-box:focus {
+            outline: none;
+            background-color: #ffffff;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .section-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            letter-spacing: 0.1px;
+        }
+
         .hidden-link {
-            font-size: 11px; color: #a78bfa; cursor: pointer;
-            text-decoration: none; font-weight: 600;
-            padding: 4px 10px; border-radius: 8px;
-            background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.15);
-            transition: all 0.2s;
+            font-size: 12px;
+            color: #4f46e5;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
         }
-        .hidden-link:hover { background: rgba(167,139,250,0.2); }
-        .export-btn, .import-btn {
-            font-size: 11px; color: #10b981; cursor: pointer; text-decoration: none; font-weight: 600;
-            padding: 4px 10px; border-radius: 8px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.15);
-            transition: all 0.2s; margin-left: 5px;
-        }
-        .export-btn:hover, .import-btn:hover { background: rgba(16,185,129,0.2); }
 
-        #profileList, #hiddenProfileList {
-            border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
-            height: 350px; overflow-y: auto;
-            background: rgba(0,0,0,0.15);
+        .hidden-link:hover {
+            color: #3730a3;
+            text-decoration: underline;
         }
+
+        #profileList,
+        #hiddenProfileList {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            height: 320px;
+            overflow-y: auto;
+            background: #ffffff;
+            padding: 4px;
+        }
+
         .profile-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 11px 14px; cursor: pointer;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            font-size: 13px; font-weight: 500; color: #c4b5fd;
-            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 12.5px;
+            font-weight: 500;
+            border-radius: 6px;
+            margin-bottom: 2px;
+            transition: var(--transition);
+            gap: 6px;
+            overflow: hidden;
+            width: 100%;
+            box-sizing: border-box;
         }
-        .profile-item:last-child { border-bottom: none; }
-        .profile-item:hover { background: rgba(255,255,255,0.04); }
+
+        .profile-item:last-child {
+            border-bottom: none;
+        }
+
+        .profile-item:hover {
+            background-color: #f1f5f9;
+        }
+
         .profile-item.selected {
-            background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1));
-            border-left: 3px solid #8b5cf6;
+            background-color: #e0e7ff;
+            color: #312e81;
+            border-left: 4px solid #4f46e5;
         }
-        .profile-actions { display: flex; gap: 4px; }
+
+        .profile-actions {
+            display: flex;
+            gap: 3px;
+            flex-shrink: 0;
+        }
+
         .profile-actions button {
-            padding: 4px 8px; font-size: 10px; border: none; border-radius: 6px;
-            color: white; cursor: pointer; font-weight: 600; transition: all 0.2s;
+            padding: 3px 6px;
+            font-size: 10.5px;
+            font-weight: 600;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            white-space: nowrap;
         }
-        .profile-actions button:hover { transform: scale(1.05); }
-        .edit-btn { background: rgba(34,197,94,0.3); }
-        .rename-btn { background: rgba(99,102,241,0.3); }
-        .hide-btn { background: rgba(255,255,255,0.08); }
-        .del-btn { background: rgba(239,68,68,0.25); }
-        .show-btn { background: rgba(234,179,8,0.3); color: #fde68a !important; }
 
-        /* STATUS */
-        #statusMessage { text-align: center; font-size: 12px; font-weight: 600; margin-top: 12px; }
-        .error { color: #fca5a5; } .success { color: #86efac; } .processing { color: #93c5fd; }
+        .profile-actions button:hover {
+            transform: translateY(-1px);
+        }
 
-        /* SETTINGS */
-        .settings-panel {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 14px; padding: 16px; margin-bottom: 16px;
-            animation: slideDown 0.25s ease;
+        .edit-btn {
+            background: var(--success);
         }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .settings-panel h4 { margin: 0 0 12px; font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.7); }
-        .api-key-row { display: flex; gap: 8px; align-items: center; }
-        .api-key-input {
-            flex: 1; padding: 9px 12px; font-size: 12px; font-family: monospace;
-            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px; color: #c7d2fe; outline: none; transition: all 0.2s;
-        }
-        .api-key-input::placeholder { color: rgba(255,255,255,0.2); }
-        .api-key-input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.15); }
-        .save-key-btn {
-            padding: 9px 16px; font-size: 12px; font-weight: 700;
-            background: linear-gradient(135deg, #059669, #10b981);
-            border: none; border-radius: 10px; color: white;
-            cursor: pointer; transition: all 0.2s;
-        }
-        .save-key-btn:hover { transform: scale(1.03); }
-        .api-key-help { margin-top: 10px; font-size: 11px; color: rgba(255,255,255,0.35); line-height: 1.5; }
-        .api-key-help a { color: #a78bfa; text-decoration: none; font-weight: 600; cursor: pointer; }
-        .key-status { font-size: 12px; font-weight: 600; margin-top: 8px; }
-        .key-status.valid { color: #86efac; }
-        .key-status.invalid { color: #fca5a5; }
-        .key-status.checking { color: #93c5fd; }
 
-        .back-btn {
-            background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);
-            border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px;
-            border-radius: 8px; font-size: 11px; font-weight: 600;
-            cursor: pointer; transition: all 0.2s;
+        .edit-btn:hover {
+            background: var(--success-hover);
         }
-        .back-btn:hover { background: rgba(255,255,255,0.15); color: white; }
-    
-        /* LIGHT MODE OVERRIDES */
-        body.light-mode {
-            background: linear-gradient(160deg, #f8fafc 0%, #e2e8f0 40%, #cbd5e1 100%) !important;
-            color: #0f172a !important;
+
+        .del-btn {
+            background: var(--danger);
         }
-        body.light-mode * {
-            text-shadow: none !important;
+
+        .del-btn:hover {
+            background: var(--danger-hover);
         }
-        body.light-mode .app-header {
-            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(241,245,249,0.95)) !important;
-            border-bottom: 1px solid rgba(0,0,0,0.15) !important;
+
+        .rename-btn {
+            background: var(--primary);
         }
-        body.light-mode .app-title {
-            background: linear-gradient(135deg, #312e81, #4c1d95, #701a75) !important;
-            -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important;
+
+        .rename-btn:hover {
+            background: var(--primary-hover);
         }
-        body.light-mode .app-version {
-            color: #334155 !important; background: rgba(0,0,0,0.1) !important;
+
+        .hide-btn {
+            background: #64748b;
         }
-        body.light-mode .settings-btn, body.light-mode .icon-btn {
-            background: rgba(0,0,0,0.08) !important; color: #1e293b !important; border-color: rgba(0,0,0,0.15) !important;
+
+        .hide-btn:hover {
+            background: #475569;
         }
-        body.light-mode .settings-btn:hover, body.light-mode .icon-btn:hover {
-            background: rgba(0,0,0,0.15) !important; color: #000 !important;
+
+        .show-btn {
+            background: var(--warning);
+            color: white !important;
         }
-        body.light-mode .card, body.light-mode .settings-panel {
-            background: rgba(255,255,255,0.9) !important;
-            border-color: rgba(0,0,0,0.15) !important;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
-            color: #0f172a !important;
+
+        .show-btn:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
         }
-        body.light-mode .card-label, body.light-mode .section-label, body.light-mode .settings-panel h4 {
-            color: #000 !important; font-weight: 800 !important;
+
+        /* TOGGLE BUTTONS - MODERN PILLED SELECTOR */
+        .toggle-container {
+            display: flex;
+            background: #e2e8f0;
+            border-radius: 30px;
+            padding: 4px;
+            margin-bottom: 16px;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.03);
         }
-        body.light-mode label {
-            color: #000 !important; font-weight: 700 !important;
+
+        .toggle-btn {
+            flex: 1;
+            text-align: center;
+            padding: 9px 12px;
+            cursor: pointer;
+            font-size: 11.5px;
+            font-weight: 700;
+            z-index: 2;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.5px;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 25px;
         }
-        body.light-mode .search-box {
-            background: #ffffff !important;
-            border-color: rgba(0,0,0,0.2) !important;
-            color: #0f172a !important;
+
+        .toggle-btn.active {
+            color: #ffffff !important;
         }
-        body.light-mode .search-box::placeholder { color: #94a3b8 !important; }
-        body.light-mode .edit-btn { background: #22c55e !important; color: white !important; }
-        body.light-mode .rename-btn { background: #6366f1 !important; color: white !important; }
-        body.light-mode .hide-btn { background: #94a3b8 !important; color: white !important; }
-        body.light-mode .del-btn { background: #ef4444 !important; color: white !important; }
-        body.light-mode .export-btn { background: #10b981 !important; color: white !important; }
-        body.light-mode .import-btn { background: #6366f1 !important; color: white !important; }
-        body.light-mode .show-btn { background: #eab308 !important; color: white !important; }
-        body.light-mode .hidden-link { color: #6366f1 !important; }
-        body.light-mode .toggle-container {
-            background: rgba(0,0,0,0.1) !important; border-color: rgba(0,0,0,0.15) !important;
+
+        #toggle-slider {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: var(--primary);
+            border-radius: 25px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
         }
-        body.light-mode .toggle-btn { color: #334155 !important; font-weight: 700 !important; }
-        body.light-mode .toggle-btn.active { color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important; }
-        body.light-mode .profile-item {
-            color: #000 !important; border-color: rgba(0,0,0,0.15) !important; font-weight: 700 !important;
-            background: #f8fafc !important;
+
+        /* DYNAMIC GOLD HIGHLIGHTS FOR PASSPORT SELECTION */
+        #btn-passport-mode.active~#toggle-slider {
+            background: linear-gradient(135deg, #fbbf24 0%, #d97706 50%, #b45309 100%) !important;
+            box-shadow: 0 4px 10px rgba(217, 119, 6, 0.45) !important;
         }
-        body.light-mode .profile-item span {
-            color: #000 !important;
+
+        /* METALLIC GOLD PULSATING GLOW - SHINES CONTINUOUSLY WHEN INACTIVE */
+        #btn-passport-mode:not(.active) {
+            border: 1px solid rgba(217, 119, 6, 0.35);
+            background: rgba(254, 243, 199, 0.2);
+            color: #b45309;
+            animation: luxury-gold-pulsate 2s infinite ease-in-out;
+            font-weight: 800;
         }
-        body.light-mode .profile-item:hover { background: rgba(0,0,0,0.05) !important; }
-        body.light-mode .profile-item.selected {
-            background: linear-gradient(135deg, rgba(79,70,229,0.15), rgba(124,58,237,0.15)) !important;
-            border-color: #4f46e5 !important;
+
+        #btn-passport-mode:not(.active):hover {
+            background: rgba(254, 243, 199, 0.4);
+            transform: scale(1.02);
+            border-color: rgba(217, 119, 6, 0.6);
         }
-        body.light-mode #profileList, body.light-mode #hiddenProfileList, body.light-mode #tempIdsList, body.light-mode #tempIdList {
-            background: rgba(255,255,255,0.7) !important; border-color: rgba(0,0,0,0.15) !important;
-            color: #0f172a !important;
+
+        @keyframes luxury-gold-pulsate {
+            0% {
+                box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4), inset 0 0 4px rgba(217, 119, 6, 0.1);
+            }
+
+            50% {
+                box-shadow: 0 0 10px 3px rgba(217, 119, 6, 0.25), inset 0 0 8px rgba(217, 119, 6, 0.2);
+                border-color: rgba(217, 119, 6, 0.7);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4), inset 0 0 4px rgba(217, 119, 6, 0.1);
+            }
         }
-        body.light-mode input[type="file"], body.light-mode select, body.light-mode textarea, body.light-mode input[type="text"], body.light-mode input[type="password"] {
-            background: #fff !important; border-color: rgba(0,0,0,0.3) !important; color: #000 !important;
+
+        /* PASSPORT BUTTON */
+
+        /* STATUS MESSAGES */
+        #statusMessage {
+            text-align: center;
+            font-size: 12.5px;
+            font-weight: 600;
+            margin-top: 14px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: var(--transition);
         }
-        body.light-mode .api-key-input {
-            background: #fff !important; color: #000 !important; border-color: rgba(0,0,0,0.3) !important;
+
+        #statusMessage:empty {
+            display: none;
         }
-        body.light-mode .api-key-help { color: #334155 !important; }
-        body.light-mode .back-btn {
-            background: rgba(255,255,255,0.9) !important; color: #0f172a !important; border-color: rgba(0,0,0,0.2) !important;
+
+        .error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .processing {
+            background-color: #e0e7ff;
+            color: #3730a3;
+            border: 1px solid #c7d2fe;
+            animation: processing-pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes processing-pulse {
+            0% {
+                opacity: 0.8;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.8;
+            }
+        }
+
+        /* SIGN IN WITH GOOGLE & LOGIN VIEW */
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .google-btn:hover {
+            background-color: #f8fafc;
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transform: translateY(-1px);
+        }
+
+        .google-btn:active {
+            background-color: #f1f5f9;
+            transform: scale(0.98);
+        }
+
+        /* UPLOAD & CARD IMPROVEMENTS */
+        input[type="file"] {
+            font-family: inherit;
+            color: var(--text-sub);
+            font-size: 13px;
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px dashed #cbd5e1;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: var(--transition);
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }
+
+        input[type="file"]:hover {
+            border-color: #6366f1;
+            background: #f5f3ff;
+            color: #4f46e5;
+        }
+
+        /* Auto captchas checkbox modern stylings */
+        input[type="checkbox"] {
+            appearance: none;
+            width: 38px;
+            height: 20px;
+            background-color: #cbd5e1;
+            border-radius: 20px;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+        }
+
+        input[type="checkbox"]:checked {
+            background-color: #4f46e5;
+        }
+
+        input[type="checkbox"]::before {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: white;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+
+        input[type="checkbox"]:checked::before {
+            transform: translateX(18px);
+        }
+
+        /* CUSTOM DESIGN UPGRADE */
+        #login-view svg {
+            filter: drop-shadow(0 4px 6px rgba(99, 102, 241, 0.2));
+            animation: float 3s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        /* PASSPORT EXPIRY PROFILE CARD WARNING */
+        .profile-item.expiry-warning {
+            background-color: #fee2e2 !important;
+            border: 1.5px solid #f87171 !important;
+            color: #991b1b !important;
+        }
+
+        .profile-item.expiry-warning:hover {
+            background-color: #fecaca !important;
+            border-color: #ef4444 !important;
+        }
+
+        .profile-item.expiry-warning.selected {
+            background-color: #fee2e2 !important;
+            color: #7f1d1d !important;
+            border-left: 4px solid #dc2626 !important;
+            border-color: #f87171 !important;
+        }
+
+        .profile-item.expiry-warning .profile-name-text {
+            color: #991b1b !important;
             font-weight: 700 !important;
         }
-        body.light-mode .back-btn:hover {
-            background: #fff !important; color: #000 !important; box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+    
+        /* DARK MODE OVERRIDES */
+        body.dark-mode {
+            --bg-main: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --border-color: #334155;
+            background-color: var(--bg-main) !important;
+            color: var(--text-main) !important;
         }
-        body.light-mode .footer { color: #475569 !important; font-weight: 600 !important; }
-        body.light-mode .key-status { color: #0f172a !important; font-weight: 600 !important; }
-        body.light-mode .free-banner {
-            background: rgba(99,102,241,0.08) !important;
-            border-color: rgba(99,102,241,0.2) !important;
-            color: #4338ca !important;
+        body.dark-mode .card,
+        body.dark-mode .app-header {
+            background: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-main) !important;
         }
-        body.light-mode details summary {
-            color: #4f46e5 !important;
+        body.dark-mode input,
+        body.dark-mode select,
+        body.dark-mode textarea {
+            background: #0f172a !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+        body.dark-mode .profile-item {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        body.dark-mode .profile-item span {
+            color: #f8fafc !important;
+        }
+        body.dark-mode #userNameDisplay {
+            background: #312e81 !important;
+            color: #c7d2fe !important;
+        }
+        body.dark-mode .search-box {
+            background: #0f172a !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+        body.dark-mode .search-box::placeholder {
+            color: #64748b !important;
+        }
+        body.dark-mode .icon-btn,
+        body.dark-mode .settings-btn {
+            background: #334155 !important;
+            border-color: #475569 !important;
+            color: #f8fafc !important;
+        }
+        body.dark-mode #profileList,
+        body.dark-mode #hiddenProfileList {
+            background: #0f172a !important;
+            border-color: #334155 !important;
         }
 
     </style>
-    <script src="lib/firebase-app-compat.js"></script>
-    <script src="lib/firebase-auth-compat.js"></script>
-    <script src="lib/firebase-firestore-compat.js"></script>
-    <script src="firebase-config.js"></script>
-    <script src="build/pdf.mjs" type="module"></script>
-    <script src="polyfills.js"></script>
-    <script src="gemini.js" type="module"></script>
-    </head>
+</head>
+
 <body>
-    <!-- AUTH VIEW -->
-    <div id="auth-view" class="hidden" style="display:none !important;">
-        <h2 style="margin-bottom:5px;">Welcome to Cloud</h2>
-        <p style="font-size:11px; color:#9ca3af; margin-bottom:20px;">Log in to sync your profiles</p>
-        
-        <input type="email" id="authEmail" placeholder="Email" style="width:100%; padding:10px; margin-bottom:10px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-size:12px;">
-        <input type="password" id="authPassword" placeholder="Password" style="width:100%; padding:10px; margin-bottom:15px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; font-size:12px;">
-        
-        <div id="authError" style="color:#ef4444; font-size:11px; margin-bottom:10px; display:none;"></div>
-        
-        <button id="loginBtn" style="width:100%; padding:10px; background:#4f46e5; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom:10px;">Login</button>
-        <button id="signupBtn" style="width:100%; padding:10px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom:10px;">Create Account</button>
-        
-        <div style="text-align:center; margin-top:10px;">
-            <a href="#" id="forgotBtn" style="color:#60a5fa; font-size:12px; text-decoration:none;">Forgot Password?</a>
+    <div id="login-view" class="hidden" style="display:none !important;">
+        <div style="margin-bottom: 30px;">
+            <svg width="55" height="55" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <h2 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #202124;">Indian Visa Autofill</h2>
+            <p style="margin: 0; font-size: 15px; color: #5f6368;">Welcome back! Please sign in.</p>
+        </div>
+
+        <div class="card"
+            style="padding: 35px 25px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); border: 1px solid #eaeaea; border-radius: 12px; max-width: 320px; margin: 0 auto;">
+            <p style="margin: 0 0 25px; font-size: 14px; font-weight: 600; color: #d93025;">অনুগ্রহ করে ব্যবহারের জন্য
+                লগইন করুন</p>
+
+            <button id="btnLogin" class="google-btn">
+                <span
+                    style="display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin-right: 14px; background: white;">
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="20px" height="20px"
+                        viewBox="0 0 48 48">
+                        <g>
+                            <path fill="#EA4335"
+                                d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z">
+                            </path>
+                            <path fill="#4285F4"
+                                d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z">
+                            </path>
+                            <path fill="#FBBC05"
+                                d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z">
+                            </path>
+                            <path fill="#34A853"
+                                d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z">
+                            </path>
+                            <path fill="none" d="M0 0h48v48H0z"></path>
+                        </g>
+                    </svg>
+                </span>
+                <span
+                    style="font-family: 'Roboto', 'Segoe UI', sans-serif; font-size: 15px; font-weight: 500; color: #3c4043;">Sign
+                    in with Google</span>
+            </button>
         </div>
     </div>
 
-    <!-- MAIN APP VIEW (Hidden by default) -->
     <div id="app-view">
         <div class="app-header">
-            <div style="display:flex;align-items:center;">
-                <span class="app-title">Indian Visa Autofill Cloud</span>
-                <span class="app-version">v2.1</span>
-            </div>
+            <div><span id="userNameDisplay" style="background:#e0e7ff; color:#3730a3; font-weight:700;">✨ Gemini AI</span></div>
             <div class="header-actions">
-                <a id="followBtn" href="https://www.facebook.com/AverageStudentbd" target="_blank" class="icon-btn fb-btn" title="Follow on Facebook">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                </a>
-                <button id="themeToggleBtn" class="settings-btn" title="Toggle Light/Dark Mode" style="font-size:12px;">🌓</button>
-                <button id="adminBtn" class="icon-btn" title="Admin Dashboard" style="display:none;">👑</button>
-                <button id="logoutBtn" class="icon-btn" title="Logout">🚪</button>
-                <button id="settingsToggleBtn" class="settings-btn" title="Settings">⚙</button>
+                <a id="followBtn" class="icon-btn fb-btn" title="Follow AverageStudentbd" href="https://www.facebook.com/AverageStudentbd" target="_blank"><svg viewBox="0 0 24 24" width="14" height="14"
+                        fill="currentColor">
+                        <path
+                            d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                    </svg></a>
+                <button type="button" id="themeToggleBtn" class="icon-btn" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; width:24px; height:24px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:12px;" title="Toggle Light/Dark Mode">🌓</button>
+                <button type="button" id="openSettingsBtn" class="icon-btn" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; width:24px; height:24px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:12px;" title="Gemini AI Settings">⚙️</button>
+                <a id="addBalanceBtn" class="hidden" style="display:none !important;"></a>
+                <span class="credits-pill" style="background:#dcfce7; color:#15803d; border-color:#86efac; animation:none;">⚡ 100% FREE</span></span>
+                <span id="logoutBtn" class="hidden" style="display:none !important;"></span>
             </div>
         </div>
 
-        <div class="app-wrapper">
-            <!-- SETTINGS -->
-            <div id="settingsPanel" class="settings-panel hidden">
-                <h4>🔑 Gemini API Key (Free)</h4>
-                <div class="api-key-row">
-                    <input type="password" id="apiKeyInput" class="api-key-input" placeholder="Paste your API key...">
-                    <button id="saveKeyBtn" class="save-key-btn">Save</button>
-                </div>
-                <div id="keyStatus" class="key-status"></div>
-                <div class="api-key-help" style="margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
-                    Get your <b>FREE</b> key → <a id="getKeyLink">aistudio.google.com/apikey</a>
-                </div>
-
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <label style="font-size:11px;">AI Model:</label>
-                    <select id="modelSelect" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:4px; font-size:10px;">
-                        <option value="gemini-3.6-flash">Gemini 3.6 Flash (Latest)</option>
-                        
-                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (Smart)</option>
-                    </select>
-                </div>
-
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <label style="font-size:11px;">Auto-delete Profiles:</label>
-                    <select id="autoDeleteSelect" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:4px; font-size:10px;">
-                        <option value="0">Never</option>
-                        <option value="7">After 7 Days</option>
-                        <option value="30">After 30 Days</option>
-                    </select>
-                </div>
-
-                <div style="margin-bottom:10px; display:flex; align-items:center;">
-                    <input type="checkbox" id="fillMissingOnly" style="margin-right:6px;">
-                    <label for="fillMissingOnly" style="font-size:11px; cursor:pointer;">Fill Missing Fields Only</label>
-                </div>
-
-                <div style="margin-bottom:10px;">
-                    <details>
-                        <summary style="font-size:11px; cursor:pointer; color:#a78bfa;">Edit AI Prompts</summary>
-                        <div style="margin-top:8px;">
-                            <label style="font-size:10px;">BGD PDF Prompt:</label>
-                            <textarea id="promptBGD" style="width:100%; height:60px; font-size:9px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:4px;"></textarea>
-                            
-                            <label style="font-size:10px; margin-top:5px; display:block;">Passport Prompt:</label>
-                            <textarea id="promptPassport" style="width:100%; height:60px; font-size:9px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:4px;"></textarea>
-                        </div>
-                    </details>
-                </div>
-
-                <button id="clearDataBtn" style="width:100%; padding:6px; background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; font-size:11px; cursor:pointer; margin-bottom:10px;">
-                    🗑 Clear All Data
-                </button>
-            </div>
-
-            <div class="free-banner">
-                <span>⚡</span> 100% FREE — Powered by Gemini AI <span>⚡</span>
-            </div>
-
-            
-            <!-- V10.0 Quick Action Center -->
-            <div class="card" style="margin-bottom: 14px; padding: 12px;">
-                <button id="openCaptchaControlBtn" class="btn" style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); margin-bottom: 8px; font-size: 12px; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700;">
-                    🛡️ Captcha & Automation Control
-                </button>
-                <button id="viewTempIdsBtn" class="btn" style="background: linear-gradient(135deg, #05c46b, #0be881); font-size: 12px; padding: 8px; width: 100%; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 700; margin-bottom: 8px;">
-                    📋 View Temporary IDs
-                </button>
-                <button id="openAdditionalServicesBtn" class="btn" style="background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid rgba(255,255,255,0.1); font-size: 12px; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700;">
-                    ⚡ Additional Services (Tax / Port / Letters)
-                </button>
-            </div>
-
-            <div class="toggle-container">
-                <div id="toggle-slider"></div>
-                <button class="toggle-btn active" id="btn-pdf-mode">📄 BGD PDF</button>
-                <button class="toggle-btn" id="btn-passport-mode">🛂 PASSPORT</button>
-            </div>
-
-            <div id="main-content">
-                <div id="pdf-upload-section" class="card">
-                    <div class="card-label"><span class="step">1</span> Upload Application PDF(s)</div>
-                    <input type="file" id="pdfUpload" accept=".pdf" multiple>
-                    <div id="pdfProgress" class="progress-bar"><div class="progress-bar-fill" id="pdfProgressFill"></div></div>
-                    <button id="saveProfileButton" class="btn btn-extract" style="margin-top:10px;">✨ Extract Data</button>
-                </div>
-
-                <div id="passport-upload-section" class="card hidden">
-                    <div class="card-label"><span class="step">1</span> Upload Passport(s)</div>
-                    <input type="file" id="passportUpload" accept="image/*,.pdf" multiple>
-                    <div id="passportProgress" class="progress-bar"><div class="progress-bar-fill" id="passportProgressFill"></div></div>
-                    <button id="saveProfileButtonPassport" class="btn btn-passport" style="margin-top:10px;">🔍 Extract Data</button>
-                </div>
-
-                <div class="card" style="height:100%;">
-                    <div class="section-header">
-                        <div class="card-label" style="margin-bottom:0;"><span class="step">2</span> Select Profile</div>
-                        <div>
-                            <span id="importBtn" class="import-btn">⬆ Import</span>
-                            <span id="exportBtn" class="export-btn" title="Export profiles to file">⬇ Export</span>
-                            <span id="viewHiddenBtn" class="hidden-link">Hidden</span>
-                        </div>
-                    </div>
-                    <input type="file" id="importInput" accept=".json,.ivprof" style="display:none;">
-                    <input type="text" id="searchInput" class="search-box" placeholder="🔎 Search by name...">
-                    <div id="profileList"></div>
-                    <button id="autofillButton" class="btn btn-autofill">🚀 AUTOFILL FORM</button>
-                </div>
-
-                <!-- NEW TEMP ID SECTION -->
-                <div class="card" style="margin-top:12px;">
-                    <div class="section-header">
-                        <div class="card-label" style="margin-bottom:0;"><span class="step">3</span> Recent Temp IDs</div>
-                    </div>
-                    <div id="tempIdList" style="max-height: 120px; overflow-y: auto; margin-top: 8px;">
-                        <div style="text-align:center; color:#9ca3af; font-size:11px; padding:10px;">No IDs found yet. Fill a form to track.</div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="hidden-view" class="hidden">
-                <div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                        <div class="card-label" style="margin-bottom:0;">Hidden Profiles</div>
-                        <button id="backToMainBtn" class="back-btn">← Back</button>
-                    </div>
-                    <div id="hiddenProfileList"></div>
-                </div>
-            </div>
-
-            <div id="statusMessage"></div>
+        <div class="card" style="margin-bottom: 15px; padding: 12px;">
+            <button id="openCaptchaControlBtn" class="btn"
+                style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); margin-bottom: 10px; font-size: 13px; padding: 8.5px 12px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; box-shadow: 0 3px 10px rgba(79, 70, 229, 0.25);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                Captcha and Popup Control
+            </button>
+            <button id="viewTempIdsBtn" class="btn"
+                style="background: linear-gradient(135deg, #05c46b, #0be881); box-shadow: 0 4px 15px rgba(5, 196, 107, 0.4); font-size: 13px; padding: 8px; width: 100%; border: none; border-radius: 6px; color: white; cursor: pointer; font-weight: bold;">View
+                Temporary IDs</button>
+            <button id="openAdditionalServicesBtn" class="btn-matte-black"
+                style="margin-top: 10px; font-size: 13px; padding: 8.5px 12px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Additional Services
+            </button>
         </div>
-    </div>
 
-    <input type="file" id="fileInputID" style="display:none;">
-    <script src="sidepanel.js" type="module"></script>
+        <div class="toggle-container">
+            <button class="toggle-btn active" id="btn-pdf-mode">BGD PDF</button>
+            <button class="toggle-btn" id="btn-passport-mode">PASSPORT</button>
+            <div id="toggle-slider"></div>
+        </div>
 
-        <!-- Recent Temporary IDs View -->
+        <div id="main-content">
+            <div id="pdf-upload-section" class="card">
+                <label><b>1. Upload Application PDF</b></label>
+                <input type="file" id="pdfUpload" accept=".pdf" style="margin-top:8px; width:100%;">
+                <button id="saveProfileButton" class="btn" style="background-color: #0d6efd; margin-top: 10px;">Extract Data (Free - Gemini AI)</button>
+            </div>
+
+            <div class="card" style="height: 100%;">
+                <div class="section-header">
+                    <h4 class="section-label">2. Select Profile</h4>
+                    <span id="viewHiddenBtn" class="hidden-link">Show Hidden</span>
+                </div>
+
+                <input type="text" id="searchInput" class="search-box" placeholder="Search by name...">
+
+                <div id="profileList"></div>
+
+                <button id="autofillButton" class="btn" style="background-color: #198754; margin-top:15px;">AUTOFILL
+                    FORM</button>
+            </div>
+        </div>
+
+        <div id="hidden-view" class="hidden">
+            <div class="card">
+                <div class="section-header">
+                    <label>Hidden Profiles</label>
+                    <button id="backToMainBtn" class="text-btn" style="background:#6c757d; color:white;">Back</button>
+                </div>
+                <div id="hiddenProfileList"></div>
+            </div>
+        </div>
+
         <div id="temp-ids-view" class="hidden">
             <div class="card">
                 <div class="section-header">
-                    <label style="font-weight:700; font-size:12px; color:#c7d2fe;">Recent Temporary & BGD IDs</label>
-                    <button id="backFromTempIdsBtn" class="back-btn" style="font-size:10px;">Back</button>
+                    <label>Recent Temporary IDs</label>
+                    <button id="backFromTempIdsBtn" class="text-btn"
+                        style="background:#6c757d; color:white;">Back</button>
                 </div>
-                <div id="tempIdsList" style="max-height: 320px; overflow-y: auto; font-size: 12px; margin-top: 8px;"></div>
+                <div id="tempIdsList" style="max-height: 300px; overflow-y: auto; font-size: 12px;"></div>
             </div>
         </div>
 
+        <div id="statusMessage"></div>
+
         <!-- Captcha and Popup Control Modal -->
-        <div id="captchaControlModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); padding: 12px; box-sizing: border-box;">
-            <div style="background: white; padding: 16px; border-radius: 12px; width: 100%; max-width: 360px; max-height: 88vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.25); border: 1px solid #e2e8f0; box-sizing: border-box; color: #1e293b;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;">
-                    <span style="font-size:13.5px; font-weight:700; color:#0f172a; display: flex; align-items: center; gap: 6px;">
-                        🛡️ Captcha & Automation Control
+        <div id="captchaControlModal" class="hidden"
+            style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.65); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); padding: 12px;">
+            <div
+                style="background: white; padding: 16px; border-radius: 12px; width: 100%; max-width: 360px; max-height: 88vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.25); border: 1px solid #e2e8f0; box-sizing: border-box;">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;">
+                    <span
+                        style="font-size:13.5px; font-weight:700; color:#0f172a; display: flex; align-items: center; gap: 6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        Captcha & Automation Control
                     </span>
-                    <button id="closeCaptchaModalBtn" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b; line-height: 1; padding: 0 4px;">&times;</button>
+                    <button id="closeCaptchaModalBtn"
+                        style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b; line-height: 1; padding: 0 4px;">&times;</button>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-                        <div>
-                            <label for="autoStartupCaptchaToggle" style="display: block; font-size: 12px; font-weight: 700; color: #1e293b; cursor: pointer;">Advance Visa Captcha</label>
-                            <span style="display: block; font-size: 10.5px; color: #64748b;">Gemini solver for startup form</span>
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;">
+                    <!-- Startup Captcha -->
+                    <div
+                        style="display: flex; align-items: flex-start; justify-content: space-between; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <div style="padding-right: 8px;">
+                            <label for="autoStartupCaptchaToggle"
+                                style="display: block; font-size: 12.5px; font-weight: 700; color: #1e293b; cursor: pointer;">
+                                Advance Visa Captcha (0.5 Cr)
+                            </label>
+                            <span style="display: block; font-size: 11px; color: #64748b; margin-top: 2px;">
+                                High-precision solver for startup form.
+                            </span>
                         </div>
-                        <input type="checkbox" id="autoStartupCaptchaToggle" checked>
+                        <input type="checkbox" id="autoStartupCaptchaToggle"
+                            style="transform: scale(1.2); margin-top: 4px; cursor: pointer;" checked>
                     </div>
 
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-                        <div>
-                            <label for="autoGeneralCaptchaToggle" style="display: block; font-size: 12px; font-weight: 700; color: #1e293b; cursor: pointer;">General Captchas</label>
-                            <span style="display: block; font-size: 10.5px; color: #64748b;">Status, Reprint & Tax portals</span>
+                    <!-- General Captchas -->
+                    <div
+                        style="display: flex; align-items: flex-start; justify-content: space-between; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <div style="padding-right: 8px;">
+                            <label for="autoGeneralCaptchaToggle"
+                                style="display: block; font-size: 12.5px; font-weight: 700; color: #1e293b; cursor: pointer;">
+                                General Captchas (0.05 Cr)
+                            </label>
+                            <span style="display: block; font-size: 11px; color: #64748b; margin-top: 2px;">
+                                For Status Check, Resume Form, Print & Tax portals.
+                            </span>
                         </div>
-                        <input type="checkbox" id="autoGeneralCaptchaToggle" checked>
+                        <input type="checkbox" id="autoGeneralCaptchaToggle"
+                            style="transform: scale(1.2); margin-top: 4px; cursor: pointer;" checked>
                     </div>
 
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-                        <div>
-                            <label for="modalAutoFillPopupToggle" style="display: block; font-size: 12px; font-weight: 700; color: #1e293b; cursor: pointer;">Floating Autofill Bar</label>
-                            <span style="display: block; font-size: 10.5px; color: #64748b;">On-page floating quick bar</span>
+                    <!-- Floating UI -->
+                    <div
+                        style="display: flex; align-items: flex-start; justify-content: space-between; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <div style="padding-right: 8px;">
+                            <label for="modalAutoFillPopupToggle"
+                                style="display: block; font-size: 12.5px; font-weight: 700; color: #1e293b; cursor: pointer;">
+                                Floating Autofill UI
+                            </label>
+                            <span style="display: block; font-size: 11px; color: #64748b; margin-top: 2px;">
+                                Show quick floating autofill bar on web pages.
+                            </span>
                         </div>
-                        <input type="checkbox" id="modalAutoFillPopupToggle" checked>
+                        <input type="checkbox" id="modalAutoFillPopupToggle"
+                            style="transform: scale(1.2); margin-top: 4px; cursor: pointer;" checked>
+                    </div>
+
+                    <!-- Auto Fill On Load -->
+                    <div
+                        style="display: flex; align-items: flex-start; justify-content: space-between; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <div style="padding-right: 8px;">
+                            <label for="modalAutoFillOnLoadToggle"
+                                style="display: block; font-size: 12.5px; font-weight: 700; color: #1e293b; cursor: pointer;">
+                                Automatic Form Filling
+                            </label>
+                            <span style="display: block; font-size: 11px; color: #64748b; margin-top: 2px;">
+                                Trigger filling immediately upon opening supported visa pages.
+                            </span>
+                        </div>
+                        <input type="checkbox" id="modalAutoFillOnLoadToggle"
+                            style="transform: scale(1.2); margin-top: 4px; cursor: pointer;" checked>
                     </div>
                 </div>
 
-                <button id="doneCaptchaModalBtn" style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); width: 100%; padding: 8px 12px; font-size: 12px; border-radius: 6px; color: white; border: none; font-weight: 700; cursor: pointer;">Done</button>
+                <!-- Section: Turn on/off popup windows -->
+                <div style="margin-top: 14px; margin-bottom: 16px; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+                    <span
+                        style="display: block; font-size: 11.5px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 8px;">
+                        turn on/off popup windows
+                    </span>
+                    <div style="display: flex; flex-direction: column; gap: 7px;">
+                        <!-- Temporary ID Page -->
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <label for="autoPopupTempIdToggle"
+                                style="font-size: 12.5px; font-weight: 600; color: #1e293b; cursor: pointer;">
+                                Temporary ID Page
+                            </label>
+                            <input type="checkbox" id="autoPopupTempIdToggle"
+                                style="transform: scale(1.2); cursor: pointer;" checked>
+                        </div>
+
+                        <!-- Status Check -->
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <label for="autoPopupStatusCheckToggle"
+                                style="font-size: 12.5px; font-weight: 600; color: #1e293b; cursor: pointer;">
+                                Status Check
+                            </label>
+                            <input type="checkbox" id="autoPopupStatusCheckToggle"
+                                style="transform: scale(1.2); cursor: pointer;" checked>
+                        </div>
+
+                        <!-- BGD Download -->
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <label for="autoPopupBgdDownloadToggle"
+                                style="font-size: 12.5px; font-weight: 600; color: #1e293b; cursor: pointer;">
+                                BGD Download
+                            </label>
+                            <input type="checkbox" id="autoPopupBgdDownloadToggle"
+                                style="transform: scale(1.2); cursor: pointer;" checked>
+                        </div>
+
+                        <!-- E Arrival -->
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <label for="autoPopupEArrivalToggle"
+                                style="font-size: 12.5px; font-weight: 600; color: #1e293b; cursor: pointer;">
+                                E Arrival
+                            </label>
+                            <input type="checkbox" id="autoPopupEArrivalToggle"
+                                style="transform: scale(1.2); cursor: pointer;" checked>
+                        </div>
+
+                        <!-- Air Subidha -->
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <label for="autoPopupAirSuvidhaToggle"
+                                style="font-size: 12.5px; font-weight: 600; color: #1e293b; cursor: pointer;">
+                                Air Subidha
+                            </label>
+                            <input type="checkbox" id="autoPopupAirSuvidhaToggle"
+                                style="transform: scale(1.2); cursor: pointer;" checked>
+                        </div>
+
+                        <!-- Travel & Port Tax -->
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <label for="autoPopupTaxToggle"
+                                style="font-size: 12.5px; font-weight: 600; color: #1e293b; cursor: pointer;">
+                                Travel & Port Tax
+                            </label>
+                            <input type="checkbox" id="autoPopupTaxToggle"
+                                style="transform: scale(1.2); cursor: pointer;" checked>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="doneCaptchaModalBtn" class="btn"
+                    style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); width: 100%; padding: 8px 12px; font-size: 12.5px; border-radius: 6px;">Done</button>
             </div>
         </div>
 
         <!-- Additional Services Modal -->
-        <div id="additionalServicesModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); padding: 12px; box-sizing: border-box;">
-            <div style="background: white; padding: 16px; border-radius: 12px; width: 100%; max-width: 360px; max-height: 88vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.25); border: 1px solid #e2e8f0; box-sizing: border-box; color: #1e293b;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;">
-                    <span style="font-size:13.5px; font-weight:700; color:#0f172a;">⚡ Additional Services</span>
-                    <button id="closeAdditionalServicesModalBtn" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b; line-height: 1; padding: 0 4px;">&times;</button>
+        <div id="additionalServicesModal" class="hidden"
+            style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.65); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); padding: 12px;">
+            <div
+                style="background: white; padding: 16px; border-radius: 12px; width: 100%; max-width: 360px; max-height: 88vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.25); border: 1px solid #e2e8f0; box-sizing: border-box;">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;">
+                    <span
+                        style="font-size:14px; font-weight:700; color:#0f172a; display: flex; align-items: center; gap: 7px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        Additional Services
+                    </span>
+                    <button id="closeAdditionalServicesModalBtn"
+                        style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b; line-height: 1; padding: 0 4px;">&times;</button>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px;">
+                    <!-- Group 1: Documents & Letters -->
                     <div>
-                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Documents & Letters</span>
-                        <div style="display: flex; flex-direction: column; gap: 5px;">
-                            <button id="asCoverLetterBtn" style="background: #1e293b; color: white; padding: 7px 10px; font-size: 12px; font-weight: 600; border-radius: 6px; border:none; cursor:pointer; text-align:left;">📄 Cover Letter Generator</button>
-                            <button id="asNocBtn" style="background: #1e293b; color: white; padding: 7px 10px; font-size: 12px; font-weight: 600; border-radius: 6px; border:none; cursor:pointer; text-align:left;">🏢 Company NOC Generator</button>
-                            <button id="asUndertakingBtn" style="background: #1e293b; color: white; padding: 7px 10px; font-size: 12px; font-weight: 600; border-radius: 6px; border:none; cursor:pointer; text-align:left;">🏥 Medical Undertaking</button>
+                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Documents & Letters</span>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <button id="asCoverLetterBtn" class="btn" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border-radius: 7px; justify-content: flex-start; gap: 8px; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                Cover Letter
+                            </button>
+                            <button id="asNocBtn" class="btn" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border-radius: 7px; justify-content: flex-start; gap: 8px; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                                NOC
+                            </button>
+                            <button id="asUndertakingBtn" class="btn" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border-radius: 7px; justify-content: flex-start; gap: 8px; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                                Medical Undertaking
+                            </button>
                         </div>
                     </div>
 
+                    <!-- Group 2: Visa Application Helpers -->
                     <div>
-                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Indian Visa Portal Shortcuts</span>
-                        <div style="display: flex; flex-direction: column; gap: 5px;">
-                            <button id="asStatusCheckBtn" style="background: #0284c7; color: white; padding: 7px 10px; font-size: 12px; font-weight: 600; border-radius: 6px; border:none; cursor:pointer; text-align:left;">🔍 Check Visa Status (Auto-Captcha)</button>
-                            <button id="asResumeAppBtn" style="background: #059669; color: white; padding: 7px 10px; font-size: 12px; font-weight: 600; border-radius: 6px; border:none; cursor:pointer; text-align:left;">🔄 Resume Partially Filled Application</button>
-                            <button id="asBgdDownloadBtn" style="background: #4f46e5; color: white; padding: 7px 10px; font-size: 12px; font-weight: 600; border-radius: 6px; border:none; cursor:pointer; text-align:left;">📥 Reprint / Download BGD PDF</button>
+                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Application Portals</span>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <button id="asStatusCheckBtn" class="btn" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border-radius: 7px; justify-content: flex-start; gap: 8px; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                Status Check
+                            </button>
+                            <button id="asResumeAppBtn" class="btn" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border-radius: 7px; justify-content: flex-start; gap: 8px; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                Resume Application
+                            </button>
+                            <button id="asBgdDownloadBtn" class="btn" style="background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%); color: white; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border-radius: 7px; justify-content: flex-start; gap: 8px; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                BGD Download
+                            </button>
                         </div>
                     </div>
 
+                    <!-- Group 3: Travel & Tax Portals -->
                     <div>
-                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Travel & Tax Portals</span>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                            <button id="asEArrivalBtn" style="background: #0d9488; color: white; padding: 7px; font-size: 11px; font-weight: 600; border-radius: 6px; border:none; cursor:pointer;">✈️ e-Arrival Card</button>
-                            <button id="asAirSuvidhaBtn" style="background: #7c3aed; color: white; padding: 7px; font-size: 11px; font-weight: 600; border-radius: 6px; border:none; cursor:pointer;">🛫 Air Suvidha</button>
-                            <button id="asTravelTaxBtn" style="background: #d97706; color: white; padding: 7px; font-size: 11px; font-weight: 600; border-radius: 6px; border:none; cursor:pointer;">💳 Travel Tax</button>
-                            <button id="asPortTaxBtn" style="background: #ea580c; color: white; padding: 7px; font-size: 11px; font-weight: 600; border-radius: 6px; border:none; cursor:pointer;">⚓ Port Tax</button>
+                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Travel & Tax Portals</span>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                            <button id="asEArrivalBtn" class="btn" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: white; padding: 8px 8px; font-size: 12px; font-weight: 600; border-radius: 7px; justify-content: center; gap: 6px; width: 100%;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                E Arrival
+                            </button>
+                            <button id="asAirSuvidhaBtn" class="btn" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; padding: 8px 8px; font-size: 12px; font-weight: 600; border-radius: 7px; justify-content: center; gap: 6px; width: 100%;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                                Air Subidha
+                            </button>
+                            <button id="asTravelTaxBtn" class="btn" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: white; padding: 8px 8px; font-size: 12px; font-weight: 600; border-radius: 7px; justify-content: center; gap: 6px; width: 100%;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                                Travel Tax
+                            </button>
+                            <button id="asPortTaxBtn" class="btn" style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: white; padding: 8px 8px; font-size: 12px; font-weight: 600; border-radius: 7px; justify-content: center; gap: 6px; width: 100%;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                                Port Tax
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <button id="doneAdditionalServicesModalBtn" style="background: #4f46e5; width: 100%; padding: 8px 12px; font-size: 12px; border-radius: 6px; color: white; border: none; font-weight: 700; cursor: pointer;">Done</button>
+                <button id="doneAdditionalServicesModalBtn" class="btn"
+                    style="background: #e2e8f0; color: #334155; width: 100%; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border-radius: 6px;">Close</button>
             </div>
         </div>
+    </div>
 
+    <script src="polyfills.js"></script>
+    <script src="sidepanel.js" type="module"></script>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); box-sizing: border-box;">
+        <div style="background: white; padding: 16px 18px; border-radius: 12px; width: 92%; max-width: 380px; max-height: 92%; overflow-y: auto; box-shadow: 0 15px 30px rgba(0,0,0,0.3); border: 1px solid #e2e8f0; box-sizing: border-box;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;">
+                <span style="font-size:13.5px; font-weight:700; color:#0f172a;">⚙️ Gemini AI Settings</span>
+                <button type="button" id="closeSettingsModalBtn" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b; line-height: 1; padding: 0 4px;">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; font-size:11.5px; font-weight:700; color:#334155; margin-bottom:5px;">Gemini API Key:</label>
+                <div style="display:flex; gap:5px;">
+                    <input type="password" id="geminiApiKeyInput" placeholder="Paste AI Studio API Key(s)..." style="flex:1; padding:7px 9px; border:1px solid #cbd5e1; border-radius:6px; font-size:11.5px; box-sizing:border-box; outline:none;">
+                    <button type="button" id="toggleApiKeyVisBtn" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:0 8px; font-size:12px; cursor:pointer;" title="Show/Hide">👁</button>
+                </div>
+                <div style="font-size:10px; color:#64748b; margin-top:5px; line-height:1.4;">
+                    Get a 100% free key: <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#4f46e5; font-weight:700; text-decoration:none;">Google AI Studio ➔</a>
+                    <span style="display:block; margin-top:3px; color:#059669; font-weight:600;">💡 Tip: You can paste multiple keys separated by commas for quota backup.</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="display:block; font-size:11.5px; font-weight:700; color:#334155; margin-bottom:5px;">AI Model:</label>
+                <select id="geminiModelSelect" style="width:100%; padding:7px 9px; border:1px solid #cbd5e1; border-radius:6px; font-size:11.5px; box-sizing:border-box; background:white; outline:none;">
+                    <option value="gemini-3.6-flash">Gemini 3.6 Flash (Fast & Accurate)</option>
+                    <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite (High Quota)</option>
+                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (1,500 req/day Free)</option>
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                    <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash 8B (Fast / 1,500 req/day)</option>
+                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (High Accuracy - 50 req/day)</option>
+                </select>
+            </div>
+
+            <div style="display:flex; gap:6px; margin-top:12px;">
+                <button type="button" id="testApiKeyBtn" style="flex:1; padding:8px; background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:6px; font-size:11.5px; font-weight:700; cursor:pointer;">Test Key</button>
+                <button type="button" id="saveApiKeyBtn" style="flex:1; padding:8px; background:linear-gradient(135deg, #6366f1, #4f46e5); color:white; border:none; border-radius:6px; font-size:11.5px; font-weight:700; cursor:pointer;">Save Key</button>
+            </div>
+            <div id="apiKeyStatus" style="font-size:11px; text-align:center; margin-top:8px; font-weight:700; min-height:16px;"></div>
+        </div>
+    </div>
+  
 </body>
+
 </html>
