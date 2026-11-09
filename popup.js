@@ -163,8 +163,8 @@ import { getDocument as e, GlobalWorkerOptions as t } from "./build/pdf.mjs"; t.
         alert(
           "⚠️ Gemini Free Tier Quota Exceeded (আজকের ফ্রি কোটা শেষ হয়ে গেছে)।\n\n" +
           "💡 সহজ সমাধান (৩০ সেকেন্ড):\n" +
-          "১. Google AI Studio (aistudio.google.com/apikey) এ গিয়ে 'Create API key in a NEW project' দিয়ে নতুন একটি Key তৈরি করে Settings এ বসান।\n" +
-          "২. অথবা Settings এ একাধিক Key কমা দিয়ে বসান (Key1, Key2)।"
+          "১. Settings (⚙️) এ গিয়ে Model হিসেবে 'Gemini 1.5 Flash' সিলেক্ট করুন (প্রতিদিন ১,৫০০ বার ফ্রি)।\n" +
+          "২. অথবা Google AI Studio (aistudio.google.com/apikey) এ গিয়ে 'Create API key in a NEW project' দিয়ে নতুন একটি Key তৈরি করে Settings এ বসান (একাধিক Key কমা দিয়ে বসানো যায়)।"
         );
         const modal = o("settingsModal") || o("settingsPanel");
         if (modal) {
@@ -249,7 +249,13 @@ function setupSettingsModal() {
     const key = await getApiKey();
     if (keyInput) keyInput.value = key || "";
     const settings = await getAdvancedSettings();
-    if (modelSelect && settings.iv_model) modelSelect.value = settings.iv_model;
+    if (modelSelect) {
+      if (settings.iv_model && !settings.iv_model.includes("2.5") && !settings.iv_model.includes("2.0")) {
+        modelSelect.value = settings.iv_model;
+      } else {
+        modelSelect.value = DEFAULT_GEMINI_MODEL;
+      }
+    }
 
     if (key) {
       fetchAvailableModels(key).then(models => {
@@ -266,7 +272,11 @@ function setupSettingsModal() {
               modelSelect.appendChild(opt);
             }
           }
-          if (settings.iv_model) modelSelect.value = settings.iv_model;
+          if (settings.iv_model && !settings.iv_model.includes("2.5") && !settings.iv_model.includes("2.0")) {
+            modelSelect.value = settings.iv_model;
+          } else {
+            modelSelect.value = DEFAULT_GEMINI_MODEL;
+          }
         }
       }).catch(() => {});
     }

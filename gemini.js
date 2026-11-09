@@ -4,20 +4,21 @@
  * Replaces AWS Lambda with Google Gemini API (free tier).
  * Handles both BGD PDF text extraction and Passport image OCR.
  * 
- * Uses: Gemini 2.5 Flash (free, vision-capable)
- * Endpoint: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+ * Uses: Gemini 1.5 Flash (free, 1,500 req/day quota, vision-capable)
+ * Endpoint: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
  */
 
 // ─── Configuration ────────────────────────────────────────────
 
 // GEMINI_MODEL is dynamically managed with automatic quota fallback. Default:
-const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
+const DEFAULT_GEMINI_MODEL = 'gemini-1.5-flash';
 
-// Fallback chain when a model reaches free-tier quota limits (e.g., 20 req/day on 3.6-flash)
+// Fallback chain when a model reaches free-tier quota limits or returns 404
 const CANDIDATE_MODELS = [
-  'gemini-3.6-flash',
   'gemini-1.5-flash',
-  'gemini-2.5-flash'
+  'gemini-1.5-flash-8b',
+  'gemini-3.8-flash',
+  'gemini-3.6-flash'
 ];
 
 // ─── JSON Schema for structured output ────────────────────────
@@ -388,23 +389,22 @@ export async function fetchAvailableModels(apiKey) {
 
 function getModelOrder(preferredModel, dynamicModels = []) {
   const list = [];
-  if (preferredModel) {
+  if (preferredModel && !preferredModel.includes('2.5') && !preferredModel.includes('2.0')) {
     list.push(preferredModel);
   }
 
   if (Array.isArray(dynamicModels) && dynamicModels.length > 0) {
-    const flashModels = dynamicModels.filter(m => /flash/i.test(m) && !list.includes(m));
-    list.push(...flashModels.slice(0, 2));
-  } else {
-    for (const m of CANDIDATE_MODELS) {
-      if (!list.includes(m)) {
-        list.push(m);
-      }
+    const flashModels = dynamicModels.filter(m => /flash/i.test(m) && !list.includes(m) && !m.includes('2.5') && !m.includes('2.0'));
+    list.push(...flashModels);
+  }
+
+  for (const m of CANDIDATE_MODELS) {
+    if (!list.includes(m)) {
+      list.push(m);
     }
   }
 
-  // Maximum 2 attempts so extraction never hangs or wastes time on repeated 404s
-  return list.slice(0, 2);
+  return list.slice(0, 4);
 }
 
 async function executeGeminiCall(rawApiKey, body, preferredModel, isStructuredJson = true, onProgress = null) {
@@ -559,12 +559,13 @@ export async function saveApiKey(key) {
 export async function getAdvancedSettings() {
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
     const settings = await chrome.storage.local.get(['iv_model', 'iv_promptBGD', 'iv_promptPassport', 'iv_autoDeleteDays', 'iv_fillMissingOnly']);
-    if (!settings.iv_model) {
+    if (!settings.iv_model || settings.iv_model.includes('2.5') || settings.iv_model.includes('2.0')) {
       settings.iv_model = DEFAULT_GEMINI_MODEL;
+      chrome.storage.local.set({ iv_model: DEFAULT_GEMINI_MODEL }).catch(() => {});
     }
     return settings;
   }
-  return {};
+  return { iv_model: DEFAULT_GEMINI_MODEL };
 }
 
 export async function saveAdvancedSettings(settings) {
@@ -717,6 +718,10 @@ export async function testApiKey(apiKey) {
           const msg = errJson?.error?.message || '';
           const match = msg.match(/retry in ([^.]+)/i);
           if (match) quotaErrorDetails = ` (${match[1].trim()} বাকি)`;
+          continue;
+        }
+
+        if (response.status === 404) {
           continue;
         }
 
