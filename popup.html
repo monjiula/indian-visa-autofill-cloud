@@ -662,6 +662,51 @@
             border-color: #334155 !important;
         }
 
+    
+        /* Golden Shining & Glowing Button for Undertaking & Additional Services */
+        .iv-btn-golden-glow {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid #fef08a !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+            position: relative !important;
+            overflow: hidden !important;
+            animation: ivGoldenGlowPulse 2.2s infinite ease-in-out !important;
+            cursor: pointer !important;
+        }
+
+        .iv-btn-golden-glow::after {
+            content: '' !important;
+            position: absolute !important;
+            top: -50% !important;
+            left: -50% !important;
+            width: 200% !important;
+            height: 200% !important;
+            background: linear-gradient(60deg, transparent 20%, rgba(255, 255, 255, 0.45) 50%, transparent 80%) !important;
+            transform: rotate(25deg) !important;
+            animation: ivGoldenShineSweep 3.5s infinite linear !important;
+            pointer-events: none !important;
+        }
+
+        @keyframes ivGoldenGlowPulse {
+            0%, 100% {
+                box-shadow: 0 0 8px rgba(245, 158, 11, 0.45), 0 0 16px rgba(217, 119, 6, 0.35);
+                border-color: #fde047 !important;
+            }
+            50% {
+                box-shadow: 0 0 18px rgba(251, 191, 36, 0.85), 0 0 30px rgba(245, 158, 11, 0.65);
+                border-color: #fef9c3 !important;
+            }
+        }
+
+        @keyframes ivGoldenShineSweep {
+            0% { transform: translateX(-100%) rotate(25deg); }
+            30% { transform: translateX(100%) rotate(25deg); }
+            100% { transform: translateX(100%) rotate(25deg); }
+        }
+
     </style>
 </head>
 
@@ -798,6 +843,107 @@
                 style="flex: 1; background: #6c5ce7; color: white; border: none; border-radius: 5px; padding: 5px; cursor: pointer; font-size: 10.5px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                 ◳ Side Panel
             </button>
+        </div>
+        <button id="openAdditionalServicesBtn" class="btn iv-btn-golden-glow"
+            style="margin-top: 8px; font-size: 12.5px; padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; width: 100%; cursor: pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Additional Services (Undertaking, NOC, etc.)
+        </button>
+
+        <!-- Additional Services Modal -->
+        <div id="additionalServicesModal" class="hidden"
+            style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.65); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); padding: 12px;">
+            <div
+                style="background: white; padding: 16px; border-radius: 12px; width: 100%; max-width: 360px; max-height: 88vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.25); border: 1px solid #e2e8f0; box-sizing: border-box;">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;">
+                    <span
+                        style="font-size:14px; font-weight:700; color:#0f172a; display: flex; align-items: center; gap: 7px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        Additional Services
+                    </span>
+                    <button id="closeAdditionalServicesModalBtn"
+                        style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b; line-height: 1; padding: 0 4px;">&times;</button>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px;">
+                    <!-- Group 1: Documents & Letters -->
+                    <div>
+                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Documents & Letters</span>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <button id="asCoverLetterBtn" class="btn" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border-radius: 7px; justify-content: flex-start; gap: 8px; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                Cover Letter
+                            </button>
+                            <button id="asNocBtn" class="btn" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border-radius: 7px; justify-content: flex-start; gap: 8px; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                                NOC
+                            </button>
+                            <button id="asUndertakingBtn" class="btn iv-btn-golden-glow" style="padding: 8px 12px; font-size: 12.5px; font-weight: 700; border-radius: 7px; justify-content: flex-start; gap: 8px; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                Undertaking (Visa & Medical)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Group 2: Visa Application Helpers -->
+                    <div>
+                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Application Portals</span>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <button id="asStatusCheckBtn" class="btn" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border-radius: 7px; justify-content: flex-start; gap: 8px; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                Status Check
+                            </button>
+                            <button id="asResumeAppBtn" class="btn" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border-radius: 7px; justify-content: flex-start; gap: 8px; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                Resume Application
+                            </button>
+                            <button id="asBgdDownloadBtn" class="btn" style="background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%); color: white; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border-radius: 7px; justify-content: flex-start; gap: 8px; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                BGD Download
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Group 3: Travel & Tax Portals -->
+                    <div>
+                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Travel & Tax Portals</span>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                            <button id="asEArrivalBtn" class="btn" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: white; padding: 8px 8px; font-size: 12px; font-weight: 600; border-radius: 7px; justify-content: center; gap: 6px; width: 100%;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                E Arrival
+                            </button>
+                            <button id="asAirSuvidhaBtn" class="btn" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; padding: 8px 8px; font-size: 12px; font-weight: 600; border-radius: 7px; justify-content: center; gap: 6px; width: 100%;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                                Air Subidha
+                            </button>
+                            <button id="asTravelTaxBtn" class="btn" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; padding: 8px 8px; font-size: 12px; font-weight: 600; border-radius: 7px; justify-content: center; gap: 6px; width: 100%;" title="Bangladesh Gov A-Challan Travel Tax">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                                Travel Tax
+                            </button>
+                            <button id="asPortTaxBtn" class="btn" style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: white; padding: 8px 8px; font-size: 12px; font-weight: 600; border-radius: 7px; justify-content: center; gap: 6px; width: 100%;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                                Port Tax
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="doneAdditionalServicesModalBtn" class="btn"
+                    style="background: #e2e8f0; color: #334155; width: 100%; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border-radius: 6px;">Close</button>
+            </div>
         </div>
 
         <!-- Export Modal -->

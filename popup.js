@@ -182,7 +182,7 @@ import { getDocument as e, GlobalWorkerOptions as t } from "./build/pdf.mjs"; t.
       if (o("userNameDisplay")) o("userNameDisplay").textContent = "✨ Gemini AI";
       if (o("userCredits")) o("userCredits").textContent = "FREE";
     } function f(e, t) { const n = o("statusMessage"); n && (n.innerText = e, n.className = t) } document.addEventListener("DOMContentLoaded", async () => {
-    setupSettingsModal(); !function () { o("btn-pdf-mode").onclick = () => r("BGD"), function () { o("mainExportBtn") && (o("mainExportBtn").onclick = () => { o("exportModal").classList.remove("hidden"), o("exportModal").style.display = "flex", chrome.storage.local.get(null, e => { let t = 0, n = 0; const s = []; for (const o in e) !["userProfile", "isLoggedIn", "lastServiceMode", "lastSelectedProfile", "recentTempIds", "autoCaptchaEnabled", "autoStartupCaptchaEnabled", "autoGeneralCaptchaEnabled", "autoFillPopupEnabled", "autoFillOnLoadEnabled", "autoPopup_temp_id", "autoPopup_status_check", "autoPopup_bgd_download", "autoPopup_earrival", "autoPopup_airsuvidha", "autoPopup_tax", "ga_client_id"].includes(o) && e[o] && e[o]._type && (s.push({ key: o, data: e[o] }), "BGD" === e[o]._type && t++, "PASSPORT" === e[o]._type && n++); const a = [{ key: "bgd", title: "BGD Profile", count: t, defaultChecked: !0, filename: "BGD_Profiles.ivprof" }, { key: "passport", title: "Passport Profile", count: n, defaultChecked: !0, filename: "Passport_Profiles.ivprof" }, { key: "hotels", title: "Saved Hotels", count: Array.isArray(e.iv_custom_hotels) ? e.iv_custom_hotels.length : 0, defaultChecked: !0, filename: "Saved_Hotels.ivprof" }, { key: "noc", title: "NOC Company", count: Array.isArray(e.iv_noc_companies) ? e.iv_noc_companies.length : 0, defaultChecked: !1, filename: "NOC_Companies.ivprof" }, { key: "recent", title: "Recent Temp,BGD,Status", count: (Array.isArray(e.recentTempIds) ? e.recentTempIds.length : 0) + (Array.isArray(e.recentResumeChecks) ? e.recentResumeChecks.length : 0) + (Array.isArray(e.recentBgdDownloads) ? e.recentBgdDownloads.length : 0) + (Array.isArray(e.recentStatusChecks) ? e.recentStatusChecks.length : 0), defaultChecked: !1, filename: "Recent_Temp_BGD_Status.ivprof" }], r = o("exportCategoryList"); r && (r.innerHTML = "", a.forEach(t => { const o = document.createElement("div"); o.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;", o.innerHTML = `\n                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; font-size: 11px; font-weight: 600; color: #1e293b; user-select: none;">\n                        <input type="checkbox" class="export-cat-chk" data-cat="${t.key}" ${t.defaultChecked ? "checked" : ""} style="cursor: pointer; width: 13px; height: 13px; accent-color: #4f46e5; margin: 0;">\n                        <span>${t.title}</span>\n                        <span style="font-size: 9.5px; font-weight: 700; color: #64748b; background: #e2e8f0; padding: 1px 5px; border-radius: 10px;">${t.count}</span>\n                    </label>\n                    <button class="cat-single-export-btn" data-cat="${t.key}" data-filename="${t.filename}" style="background: #6366f1; color: white; border: none; border-radius: 4px; padding: 2px 7px; font-size: 9.5px; font-weight: 600; cursor: pointer; transition: all 0.2s;">Export</button>\n                `, o.querySelector(".cat-single-export-btn").onclick = () => { h(_(e, t.key), t.filename) }, r.appendChild(o) })); const i = o("exportSelectedBtn"); i && (i.onclick = () => { const t = document.querySelectorAll(".export-cat-chk:checked"); if (0 === t.length) return void alert("Please select at least one category to export."); const o = {}; t.forEach(t => { const n = t.dataset.cat, s = _(e, n); Object.assign(o, s) }); const n = `Exported_Backup_${(new Date).toISOString().slice(0, 10)}.ivprof`; h(o, n) }); const c = o("exportProfileList"); c && (c.innerHTML = "", 0 === s.length ? c.innerHTML = '<div style="padding: 8px; text-align: center; color: #64748b; font-size: 11px;">No individual profiles found</div>' : s.forEach(({ key: e, data: t }) => { const o = document.createElement("div"); o.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; border-bottom: 1px solid #f1f2f6;"; const n = document.createElement("span"); n.style.cssText = "font-size: 11px; font-weight: 600; color: #334155; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;", n.textContent = t._savedName || t.Name || t.name || "Unnamed Profile"; const s = document.createElement("button"); s.textContent = "Export", s.style.cssText = "background: #64748b; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 9.5px; font-weight: 600; cursor: pointer; flex-shrink: 0;", s.onclick = () => { const o = (n.textContent || "Profile").replace(/[^\w\s-]/g, "").trim(); h({ [e]: t }, `${o}.ivprof`) }, o.appendChild(n), o.appendChild(s), c.appendChild(o) })) }) }); o("closeExportModalBtn") && (o("closeExportModalBtn").onclick = () => { o("exportModal").classList.add("hidden"), o("exportModal").style.display = "none" }); o("mainImportBtn") && (o("mainImportBtn").onclick = () => { o("importFileInput").click() }); o("importFileInput") && o("importFileInput").addEventListener("change", async e => { const t = e.target.files[0]; if (!t) return; const n = new FileReader; n.onload = async e => { try { const t = function (e) { try { const t = atob(e), o = new Uint8Array(t.length); for (let e = 0; e < t.length; e++)o[e] = t.charCodeAt(e); const n = (new TextEncoder).encode(m); for (let e = 0; e < o.length; e++)o[e] = o[e] ^ n[e % n.length]; const s = (new TextDecoder).decode(o); return JSON.parse(s) } catch (e) { return null } }(e.target.result); if (!t || "object" != typeof t) return void alert("Invalid or corrupted backup file."); const n = await chrome.storage.local.get(null), s = {}; let a = 0; const r = []; let i = 0; for (const e in t) if (!["userProfile", "isLoggedIn", "lastServiceMode", "lastSelectedProfile", "recentTempIds", "autoCaptchaEnabled", "autoStartupCaptchaEnabled", "autoGeneralCaptchaEnabled", "autoFillPopupEnabled", "autoFillOnLoadEnabled", "autoPopup_temp_id", "autoPopup_status_check", "autoPopup_bgd_download", "autoPopup_earrival", "autoPopup_airsuvidha", "autoPopup_tax", "ga_client_id", "iv_custom_hotels", "iv_noc_companies", "iv_modified_defaults", "iv_deleted_default_ids", "recentResumeChecks", "recentBgdDownloads", "recentStatusChecks", "iv_recent_traveltax_checks", "iv_recent_porttax_checks"].includes(e)) { const o = t[e]; if (o && o._type && ["BGD", "PASSPORT"].includes(o._type)) { let t = e; n[e] && (t = o._type + "_" + Date.now() + Math.floor(1e3 * Math.random()), o._savedName && (o._savedName += " (Imported)"), o.Name && (o.Name += " (Imported)"), o.name && (o.name += " (Imported)")), s[t] = o, i++, a++ } } if (i > 0 && r.push(`${i} profile(s)`), Array.isArray(t.iv_custom_hotels) && t.iv_custom_hotels.length > 0) { const e = [...Array.isArray(n.iv_custom_hotels) ? n.iv_custom_hotels : []]; let o = 0; t.iv_custom_hotels.forEach(t => { e.some(e => e.name === t.name && e.state === t.state) || (e.push(t), o++) }), o > 0 && (s.iv_custom_hotels = e, a += o, r.push(`${o} hotel(s)`)), t.iv_modified_defaults && (s.iv_modified_defaults = { ...n.iv_modified_defaults || {}, ...t.iv_modified_defaults }), t.iv_deleted_default_ids && (s.iv_deleted_default_ids = [...new Set([...n.iv_deleted_default_ids || [], ...t.iv_deleted_default_ids])]) } if (Array.isArray(t.iv_noc_companies) && t.iv_noc_companies.length > 0) { const e = [...Array.isArray(n.iv_noc_companies) ? n.iv_noc_companies : []]; let o = 0; t.iv_noc_companies.forEach(t => { e.some(e => e.name === t.name) || (e.push(t), o++) }), o > 0 && (s.iv_noc_companies = e, a += o, r.push(`${o} NOC company(s)`)) } if (Array.isArray(t.recentTempIds) && t.recentTempIds.length > 0) { let e = [...Array.isArray(n.recentTempIds) ? n.recentTempIds : []], o = 0; t.recentTempIds.forEach(t => { e.some(e => e.id === t.id) || (e.push(t), o++) }), e.length > 20 && (e = e.slice(0, 20)), o > 0 && (s.recentTempIds = e, a += o, r.push(`${o} Temp/BGD ID(s)`)) } if (["recentResumeChecks", "recentBgdDownloads", "recentStatusChecks", "iv_recent_traveltax_checks", "iv_recent_porttax_checks"].forEach(e => { if (Array.isArray(t[e]) && t[e].length > 0) { let o = [...Array.isArray(n[e]) ? n[e] : []]; t[e].forEach(e => { o.some(t => JSON.stringify(t) === JSON.stringify(e)) || o.push(e) }); const a = "iv_recent_traveltax_checks" === e || "iv_recent_porttax_checks" === e ? 30 : 20; o.length > a && (o = o.slice(0, a)), s[e] = o } }), a > 0 || Object.keys(s).length > 0) { await chrome.storage.local.set(s), alert(`Successfully imported: ${r.join(", ") || "data"}.`); c(o("btn-pdf-mode").classList.contains("active") ? "BGD" : "PASSPORT", !o("hidden-view").classList.contains("hidden")) } else alert("No new items found to import in the file.") } catch (e) { alert("Invalid backup file or corrupted data.") } }, n.readAsText(t), o("importFileInput").value = "" }) }(), o("btn-passport-mode").onclick = () => r("PASSPORT"), o("viewHiddenBtn").onclick = () => a(!0), o("backToMainBtn").onclick = () => a(!1), o("followBtn") && (o("followBtn").onclick = () => chrome.tabs.create({ url: "https://www.facebook.com/AverageStudentbd" })); o("addBalanceBtn") && (o("addBalanceBtn").onclick = () => chrome.tabs.create({ url: "https://www.facebook.com/AverageStudentbd" })); o("userNameDisplay") && (o("userNameDisplay").onclick = () => chrome.tabs.create({ url: "https://www.facebook.com/AverageStudentbd" })); o("saveProfileButton") && (o("saveProfileButton").onclick = () => l("BGD")); o("saveProfileButtonPassport") && (o("saveProfileButtonPassport").onclick = () => l("PASSPORT")); o("autofillButton") && (o("autofillButton").onclick = d);
+    setupSettingsModal(); setupAdditionalServicesModal(); !function () { o("btn-pdf-mode").onclick = () => r("BGD"), function () { o("mainExportBtn") && (o("mainExportBtn").onclick = () => { o("exportModal").classList.remove("hidden"), o("exportModal").style.display = "flex", chrome.storage.local.get(null, e => { let t = 0, n = 0; const s = []; for (const o in e) !["userProfile", "isLoggedIn", "lastServiceMode", "lastSelectedProfile", "recentTempIds", "autoCaptchaEnabled", "autoStartupCaptchaEnabled", "autoGeneralCaptchaEnabled", "autoFillPopupEnabled", "autoFillOnLoadEnabled", "autoPopup_temp_id", "autoPopup_status_check", "autoPopup_bgd_download", "autoPopup_earrival", "autoPopup_airsuvidha", "autoPopup_tax", "ga_client_id"].includes(o) && e[o] && e[o]._type && (s.push({ key: o, data: e[o] }), "BGD" === e[o]._type && t++, "PASSPORT" === e[o]._type && n++); const a = [{ key: "bgd", title: "BGD Profile", count: t, defaultChecked: !0, filename: "BGD_Profiles.ivprof" }, { key: "passport", title: "Passport Profile", count: n, defaultChecked: !0, filename: "Passport_Profiles.ivprof" }, { key: "hotels", title: "Saved Hotels", count: Array.isArray(e.iv_custom_hotels) ? e.iv_custom_hotels.length : 0, defaultChecked: !0, filename: "Saved_Hotels.ivprof" }, { key: "noc", title: "NOC Company", count: Array.isArray(e.iv_noc_companies) ? e.iv_noc_companies.length : 0, defaultChecked: !1, filename: "NOC_Companies.ivprof" }, { key: "recent", title: "Recent Temp,BGD,Status", count: (Array.isArray(e.recentTempIds) ? e.recentTempIds.length : 0) + (Array.isArray(e.recentResumeChecks) ? e.recentResumeChecks.length : 0) + (Array.isArray(e.recentBgdDownloads) ? e.recentBgdDownloads.length : 0) + (Array.isArray(e.recentStatusChecks) ? e.recentStatusChecks.length : 0), defaultChecked: !1, filename: "Recent_Temp_BGD_Status.ivprof" }], r = o("exportCategoryList"); r && (r.innerHTML = "", a.forEach(t => { const o = document.createElement("div"); o.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;", o.innerHTML = `\n                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; font-size: 11px; font-weight: 600; color: #1e293b; user-select: none;">\n                        <input type="checkbox" class="export-cat-chk" data-cat="${t.key}" ${t.defaultChecked ? "checked" : ""} style="cursor: pointer; width: 13px; height: 13px; accent-color: #4f46e5; margin: 0;">\n                        <span>${t.title}</span>\n                        <span style="font-size: 9.5px; font-weight: 700; color: #64748b; background: #e2e8f0; padding: 1px 5px; border-radius: 10px;">${t.count}</span>\n                    </label>\n                    <button class="cat-single-export-btn" data-cat="${t.key}" data-filename="${t.filename}" style="background: #6366f1; color: white; border: none; border-radius: 4px; padding: 2px 7px; font-size: 9.5px; font-weight: 600; cursor: pointer; transition: all 0.2s;">Export</button>\n                `, o.querySelector(".cat-single-export-btn").onclick = () => { h(_(e, t.key), t.filename) }, r.appendChild(o) })); const i = o("exportSelectedBtn"); i && (i.onclick = () => { const t = document.querySelectorAll(".export-cat-chk:checked"); if (0 === t.length) return void alert("Please select at least one category to export."); const o = {}; t.forEach(t => { const n = t.dataset.cat, s = _(e, n); Object.assign(o, s) }); const n = `Exported_Backup_${(new Date).toISOString().slice(0, 10)}.ivprof`; h(o, n) }); const c = o("exportProfileList"); c && (c.innerHTML = "", 0 === s.length ? c.innerHTML = '<div style="padding: 8px; text-align: center; color: #64748b; font-size: 11px;">No individual profiles found</div>' : s.forEach(({ key: e, data: t }) => { const o = document.createElement("div"); o.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; border-bottom: 1px solid #f1f2f6;"; const n = document.createElement("span"); n.style.cssText = "font-size: 11px; font-weight: 600; color: #334155; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;", n.textContent = t._savedName || t.Name || t.name || "Unnamed Profile"; const s = document.createElement("button"); s.textContent = "Export", s.style.cssText = "background: #64748b; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 9.5px; font-weight: 600; cursor: pointer; flex-shrink: 0;", s.onclick = () => { const o = (n.textContent || "Profile").replace(/[^\w\s-]/g, "").trim(); h({ [e]: t }, `${o}.ivprof`) }, o.appendChild(n), o.appendChild(s), c.appendChild(o) })) }) }); o("closeExportModalBtn") && (o("closeExportModalBtn").onclick = () => { o("exportModal").classList.add("hidden"), o("exportModal").style.display = "none" }); o("mainImportBtn") && (o("mainImportBtn").onclick = () => { o("importFileInput").click() }); o("importFileInput") && o("importFileInput").addEventListener("change", async e => { const t = e.target.files[0]; if (!t) return; const n = new FileReader; n.onload = async e => { try { const t = function (e) { try { const t = atob(e), o = new Uint8Array(t.length); for (let e = 0; e < t.length; e++)o[e] = t.charCodeAt(e); const n = (new TextEncoder).encode(m); for (let e = 0; e < o.length; e++)o[e] = o[e] ^ n[e % n.length]; const s = (new TextDecoder).decode(o); return JSON.parse(s) } catch (e) { return null } }(e.target.result); if (!t || "object" != typeof t) return void alert("Invalid or corrupted backup file."); const n = await chrome.storage.local.get(null), s = {}; let a = 0; const r = []; let i = 0; for (const e in t) if (!["userProfile", "isLoggedIn", "lastServiceMode", "lastSelectedProfile", "recentTempIds", "autoCaptchaEnabled", "autoStartupCaptchaEnabled", "autoGeneralCaptchaEnabled", "autoFillPopupEnabled", "autoFillOnLoadEnabled", "autoPopup_temp_id", "autoPopup_status_check", "autoPopup_bgd_download", "autoPopup_earrival", "autoPopup_airsuvidha", "autoPopup_tax", "ga_client_id", "iv_custom_hotels", "iv_noc_companies", "iv_modified_defaults", "iv_deleted_default_ids", "recentResumeChecks", "recentBgdDownloads", "recentStatusChecks", "iv_recent_traveltax_checks", "iv_recent_porttax_checks"].includes(e)) { const o = t[e]; if (o && o._type && ["BGD", "PASSPORT"].includes(o._type)) { let t = e; n[e] && (t = o._type + "_" + Date.now() + Math.floor(1e3 * Math.random()), o._savedName && (o._savedName += " (Imported)"), o.Name && (o.Name += " (Imported)"), o.name && (o.name += " (Imported)")), s[t] = o, i++, a++ } } if (i > 0 && r.push(`${i} profile(s)`), Array.isArray(t.iv_custom_hotels) && t.iv_custom_hotels.length > 0) { const e = [...Array.isArray(n.iv_custom_hotels) ? n.iv_custom_hotels : []]; let o = 0; t.iv_custom_hotels.forEach(t => { e.some(e => e.name === t.name && e.state === t.state) || (e.push(t), o++) }), o > 0 && (s.iv_custom_hotels = e, a += o, r.push(`${o} hotel(s)`)), t.iv_modified_defaults && (s.iv_modified_defaults = { ...n.iv_modified_defaults || {}, ...t.iv_modified_defaults }), t.iv_deleted_default_ids && (s.iv_deleted_default_ids = [...new Set([...n.iv_deleted_default_ids || [], ...t.iv_deleted_default_ids])]) } if (Array.isArray(t.iv_noc_companies) && t.iv_noc_companies.length > 0) { const e = [...Array.isArray(n.iv_noc_companies) ? n.iv_noc_companies : []]; let o = 0; t.iv_noc_companies.forEach(t => { e.some(e => e.name === t.name) || (e.push(t), o++) }), o > 0 && (s.iv_noc_companies = e, a += o, r.push(`${o} NOC company(s)`)) } if (Array.isArray(t.recentTempIds) && t.recentTempIds.length > 0) { let e = [...Array.isArray(n.recentTempIds) ? n.recentTempIds : []], o = 0; t.recentTempIds.forEach(t => { e.some(e => e.id === t.id) || (e.push(t), o++) }), e.length > 20 && (e = e.slice(0, 20)), o > 0 && (s.recentTempIds = e, a += o, r.push(`${o} Temp/BGD ID(s)`)) } if (["recentResumeChecks", "recentBgdDownloads", "recentStatusChecks", "iv_recent_traveltax_checks", "iv_recent_porttax_checks"].forEach(e => { if (Array.isArray(t[e]) && t[e].length > 0) { let o = [...Array.isArray(n[e]) ? n[e] : []]; t[e].forEach(e => { o.some(t => JSON.stringify(t) === JSON.stringify(e)) || o.push(e) }); const a = "iv_recent_traveltax_checks" === e || "iv_recent_porttax_checks" === e ? 30 : 20; o.length > a && (o = o.slice(0, a)), s[e] = o } }), a > 0 || Object.keys(s).length > 0) { await chrome.storage.local.set(s), alert(`Successfully imported: ${r.join(", ") || "data"}.`); c(o("btn-pdf-mode").classList.contains("active") ? "BGD" : "PASSPORT", !o("hidden-view").classList.contains("hidden")) } else alert("No new items found to import in the file.") } catch (e) { alert("Invalid backup file or corrupted data.") } }, n.readAsText(t), o("importFileInput").value = "" }) }(), o("btn-passport-mode").onclick = () => r("PASSPORT"), o("viewHiddenBtn").onclick = () => a(!0), o("backToMainBtn").onclick = () => a(!1), o("followBtn") && (o("followBtn").onclick = () => chrome.tabs.create({ url: "https://www.facebook.com/AverageStudentbd" })); o("addBalanceBtn") && (o("addBalanceBtn").onclick = () => chrome.tabs.create({ url: "https://www.facebook.com/AverageStudentbd" })); o("userNameDisplay") && (o("userNameDisplay").onclick = () => chrome.tabs.create({ url: "https://www.facebook.com/AverageStudentbd" })); o("saveProfileButton") && (o("saveProfileButton").onclick = () => l("BGD")); o("saveProfileButtonPassport") && (o("saveProfileButtonPassport").onclick = () => l("PASSPORT")); o("autofillButton") && (o("autofillButton").onclick = d);
   o("searchInput") && o("searchInput").addEventListener("input", () => { c(o("btn-pdf-mode").classList.contains("active") ? "BGD" : "PASSPORT", !o("hidden-view").classList.contains("hidden")) });
   const _impBtn = o("importBtn") || o("mainImportBtn"), _impIn = o("importInput") || o("importFileInput");
   if (_impBtn && _impIn) {
@@ -465,3 +465,130 @@ if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged)
   });
 }
 
+
+
+function setupAdditionalServicesModal() {
+  const modal = o("additionalServicesModal");
+  const openBtn = o("openAdditionalServicesBtn");
+  const closeBtn = o("closeAdditionalServicesModalBtn");
+  const doneBtn = o("doneAdditionalServicesModalBtn");
+
+  if (openBtn && modal) {
+    openBtn.onclick = () => {
+      modal.classList.remove("hidden");
+      modal.style.display = "flex";
+    };
+  }
+  const hideModal = () => {
+    if (modal) {
+      modal.classList.add("hidden");
+      modal.style.display = "none";
+    }
+  };
+  if (closeBtn) closeBtn.onclick = hideModal;
+  if (doneBtn) doneBtn.onclick = hideModal;
+  if (modal) {
+    modal.addEventListener("click", (evt) => {
+      if (evt.target === modal) hideModal();
+    });
+  }
+
+  async function triggerTabWizard(wizardType) {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab) return alert("No active tab found.");
+      chrome.tabs.sendMessage(tab.id, { type: "TRIGGER_WIZARD", wizard: wizardType }, (res) => {
+        if (chrome.runtime.lastError) {
+          alert("Please open the Indian Visa Application page first to use this generator.");
+        }
+      });
+      window.close();
+    } catch (err) {
+      console.error("Wizard trigger error:", err);
+    }
+  }
+
+  async function openPortal(matchUrl, targetUrl, triggerMsg, storageKey, permissions = null) {
+    try {
+      if (storageKey) await chrome.storage.local.set({ [storageKey]: Date.now() });
+      if (permissions && permissions.length > 0) {
+        try {
+          if (!await chrome.permissions.contains({ origins: permissions })) {
+            await chrome.permissions.request({ origins: permissions });
+          }
+        } catch (err) { console.warn("Permission request error:", err); }
+        try { await chrome.runtime.sendMessage({ type: "REGISTER_DYNAMIC_SCRIPTS" }); } catch (e) {}
+      }
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && tab.url && tab.url.includes(matchUrl)) {
+        if (triggerMsg) {
+          chrome.tabs.sendMessage(tab.id, { type: triggerMsg }, () => {
+            if (chrome.runtime.lastError) chrome.tabs.update(tab.id, { url: targetUrl });
+          });
+        } else {
+          chrome.tabs.update(tab.id, { url: targetUrl });
+        }
+      } else {
+        chrome.tabs.create({ url: targetUrl });
+      }
+      window.close();
+    } catch (err) {
+      console.error("IV Autofill: Portal open error:", err);
+      chrome.tabs.create({ url: targetUrl });
+      window.close();
+    }
+  }
+
+  if (o("asCoverLetterBtn")) o("asCoverLetterBtn").onclick = () => { hideModal(); triggerTabWizard("cover_letter"); };
+  if (o("asNocBtn")) o("asNocBtn").onclick = () => { hideModal(); triggerTabWizard("noc"); };
+  if (o("asUndertakingBtn")) o("asUndertakingBtn").onclick = () => { hideModal(); triggerTabWizard("undertaking"); };
+  if (o("asStatusCheckBtn")) o("asStatusCheckBtn").onclick = async () => { hideModal(); await openPortal("indianvisaonline.gov.in", "https://indianvisaonline.gov.in/visa/", "TRIGGER_STATUS_CHECK", "autoOpenStatusModal", ["https://indianvisaonline.gov.in/*"]); };
+  if (o("asResumeAppBtn")) o("asResumeAppBtn").onclick = async () => {
+    hideModal();
+    try {
+      await chrome.storage.local.set({ autoOpenResumeModal: Date.now() });
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && tab.url && tab.url.includes("indianvisa-bangladesh.nic.in")) {
+        if (tab.url.includes("CompletePartially")) {
+          chrome.tabs.sendMessage(tab.id, { type: "TRIGGER_RESUME_MODAL" }, () => {
+            if (chrome.runtime.lastError) chrome.tabs.update(tab.id, { url: "https://indianvisa-bangladesh.nic.in/" });
+          });
+        } else {
+          chrome.tabs.update(tab.id, { url: "https://indianvisa-bangladesh.nic.in/" });
+        }
+      } else {
+        chrome.tabs.create({ url: "https://indianvisa-bangladesh.nic.in/" });
+      }
+      window.close();
+    } catch (e) {
+      chrome.tabs.create({ url: "https://indianvisa-bangladesh.nic.in/" });
+      window.close();
+    }
+  };
+  if (o("asBgdDownloadBtn")) o("asBgdDownloadBtn").onclick = async () => {
+    hideModal();
+    try {
+      await chrome.storage.local.set({ autoOpenBgdDownloadModal: Date.now() });
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && tab.url && tab.url.includes("indianvisa-bangladesh.nic.in")) {
+        if (tab.url.includes("PrintApplication")) {
+          chrome.tabs.sendMessage(tab.id, { type: "TRIGGER_PRINT_MODAL" }, () => {
+            if (chrome.runtime.lastError) chrome.tabs.update(tab.id, { url: "https://indianvisa-bangladesh.nic.in/" });
+          });
+        } else {
+          chrome.tabs.update(tab.id, { url: "https://indianvisa-bangladesh.nic.in/" });
+        }
+      } else {
+        chrome.tabs.create({ url: "https://indianvisa-bangladesh.nic.in/" });
+      }
+      window.close();
+    } catch (e) {
+      chrome.tabs.create({ url: "https://indianvisa-bangladesh.nic.in/" });
+      window.close();
+    }
+  };
+  if (o("asEArrivalBtn")) o("asEArrivalBtn").onclick = async () => { hideModal(); await openPortal("indianvisaonline.gov.in/earrival", "https://indianvisaonline.gov.in/earrival/", "TRIGGER_EARRIVAL_MODAL", "autoOpenEArrivalModal", ["https://indianvisaonline.gov.in/*"]); };
+  if (o("asAirSuvidhaBtn")) o("asAirSuvidhaBtn").onclick = async () => { hideModal(); await openPortal("airsuvidha.civilaviation.gov.in", "https://airsuvidha.civilaviation.gov.in/", "TRIGGER_AIRSUVIDHA_MODAL", "autoOpenAirSuvidhaModal", ["https://airsuvidha.civilaviation.gov.in/*"]); };
+  if (o("asTravelTaxBtn")) o("asTravelTaxBtn").onclick = () => { hideModal(); chrome.tabs.create({ url: "https://www.achallan.gov.bd/acs/v2/general/challan-payment" }); window.close(); };
+  if (o("asPortTaxBtn")) o("asPortTaxBtn").onclick = async () => { hideModal(); await openPortal("passenger.blpa.gov.bd", "https://passenger.blpa.gov.bd/", "TRIGGER_PORTTAX_MODAL", "autoOpenPortTaxModal", ["https://passenger.blpa.gov.bd/*"]); };
+}
