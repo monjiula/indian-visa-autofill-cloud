@@ -1128,42 +1128,34 @@ function checkAutoContinue() {
 }
 setTimeout(checkAutoContinue, 600);
 
-
-// =========================================================================
-// === NEW WIZARDS: VISA UNDERTAKING, CONSENT LETTER & CHOICE MODAL ===
-// =========================================================================
-
-
-function showUndertakingWizard() {
-    if (typeof ie === 'function') {
-        ie();
+function ensureModalCssLoaded() {
+    if (!document.querySelector('link[href*="modal.css"]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = chrome.runtime.getURL('modal.css');
+        (document.head || document.documentElement).appendChild(link);
     }
 }
 
 
-async function parsePdfWithItemsClientSide(file) {
-    const pdfjsUrl = chrome.runtime.getURL('build/pdf.mjs');
-    const { getDocument, GlobalWorkerOptions } = await import(pdfjsUrl);
-    GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('build/pdf.worker.mjs');
 
-    const buffer = await file.arrayBuffer();
-    const pdf = await getDocument(new Uint8Array(buffer)).promise;
-    let text = "";
-    const allItems = [];
-    for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        content.items.forEach(item => {
-            allItems.push({
-                str: item.str,
-                x: Math.round(item.transform ? item.transform[4] : 0),
-                y: Math.round(item.transform ? item.transform[5] : 0),
-                page: i
-            });
-        });
-        text += content.items.map(item => item.str).join(' ') + " \n";
-    }
-    return { text, items: allItems };
+// =========================================================================
+// === FULL AUTHENTIC UNDERTAKINGS & LETTERS SUITE (V10.1.3 - 100% FREE) ===
+// =========================================================================
+
+
+function escapeHtml(text) {
+    if (!text) return text || '';
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+async function deductCredits(serviceType, cost) {
+    return true; // 100% Free
 }
 
 
@@ -1467,6 +1459,1212 @@ function extractEArrivalFieldsFromPdfText(rawText, pdfItems = []) {
 }
 
 
+let sigX = 0;
+let sigY = 0;
+let isDraggingSig = false;
+let startDragX = 0;
+let startDragY = 0;
+
+function getFormattedDate() {
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const d = new Date();
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+async function parsePdfWithItemsClientSide(file) {
+    const pdfjsUrl = chrome.runtime.getURL('build/pdf.mjs');
+    const { getDocument, GlobalWorkerOptions } = await import(pdfjsUrl);
+    GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('build/pdf.worker.mjs');
+
+    const buffer = await file.arrayBuffer();
+    const pdf = await getDocument(new Uint8Array(buffer)).promise;
+    let text = "";
+    const allItems = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        content.items.forEach(item => {
+            allItems.push({
+                str: item.str,
+                x: Math.round(item.transform ? item.transform[4] : 0),
+                y: Math.round(item.transform ? item.transform[5] : 0),
+                page: i
+            });
+        });
+        text += content.items.map(item => item.str).join(' ') + " \n";
+    }
+    return { text, items: allItems };
+}
+
+async function parsePdfClientSide(file) {
+    const res = await parsePdfWithItemsClientSide(file);
+    return res.text;
+}
+
+/**
+ * Coordinate-based local reference extractor for Section I (India & Bangladesh) from BGD application PDF
+ */
+function extractReferencesFromPdfItems(items) {
+    let refs = {
+        nameofsponsor_ind: "NILL",
+        add1ofsponsor_ind: "NILL",
+        add2ofsponsor_ind: "NILL",
+        stateofsponsor_ind: "NILL",
+        districtofsponsor_ind: "NILL",
+        phoneofsponsor_ind: "NILL",
+        nameofsponsor_msn: "NILL",
+        add1ofsponsor_msn: "NILL",
+        add2ofsponsor_msn: "NILL",
+        phoneofsponsor_msn: "NILL"
+    };
+
+    if (!Array.isArray(items) || items.length === 0) return refs;
+
+    const secIHead = items.find(it => /Details of Two Reference/i.test(it.str));
+    if (!secIHead) return refs;
+
+    const secIPage = secIHead.page || 1;
+    const pageItems = items.filter(it => (it.page || 1) === secIPage && it.str && it.str.trim());
+
+    const inInd = pageItems.find(it => /In India/i.test(it.str));
+    const inBD = pageItems.find(it => /In BANGLADESH/i.test(it.str));
+
+    let splitX = 310;
+    if (inInd && inBD && inBD.x > inInd.x) {
+        splitX = (inInd.x + inBD.x) / 2;
+    }
+
+    const rowName = pageItems.find(it => /^Name$/i.test(it.str.trim()) && it.y < secIHead.y);
+    const rowAddr = pageItems.find(it => /^Address$/i.test(it.str.trim()) && rowName && it.y < rowName.y);
+    const rowPhone = pageItems.find(it => /^Phone Number$/i.test(it.str.trim()) && rowAddr && it.y < rowAddr.y);
+
+    if (rowName && rowAddr && rowPhone) {
+        const groupLines = (itemList) => {
+            const lines = [];
+            itemList.forEach(it => {
+                const lastLine = lines[lines.length - 1];
+                if (lastLine && Math.abs(lastLine.y - it.y) <= 4) {
+                    lastLine.items.push(it);
+                } else {
+                    lines.push({ y: it.y, items: [it] });
+                }
+            });
+            return lines.map(l => {
+                l.items.sort((a, b) => a.x - b.x);
+                return l.items.map(i => i.str).join(' ').trim();
+            }).filter(Boolean);
+        };
+
+        // 1. NAME ROW: Text items on the same horizontal line as the "Name" label (within ±6px)
+        const indNameItems = pageItems.filter(it => Math.abs(it.y - rowName.y) <= 6 && it.x > (rowName.x + 10) && it.x < splitX).sort((a, b) => a.x - b.x);
+        const bdNameItems = pageItems.filter(it => Math.abs(it.y - rowName.y) <= 6 && it.x >= splitX).sort((a, b) => a.x - b.x);
+
+        if (indNameItems.length) refs.nameofsponsor_ind = indNameItems.map(it => it.str).join(' ').trim();
+        if (bdNameItems.length) refs.nameofsponsor_msn = bdNameItems.map(it => it.str).join(' ').trim();
+
+        // 2. ADDRESS ROW: Everything strictly below the Name row down to above the Phone row
+        const yAddrTop = rowName.y - 7;
+        const yAddrBottom = rowPhone.y + 6;
+
+        const indAddrItems = pageItems.filter(it => it.y <= yAddrTop && it.y > yAddrBottom && it.x > (rowName.x + 10) && it.x < splitX);
+        const bdAddrItems = pageItems.filter(it => it.y <= yAddrTop && it.y > yAddrBottom && it.x >= splitX);
+
+        const indAddrClean = indAddrItems.filter(it => !/^Address$/i.test(it.str.trim())).sort((a, b) => b.y - a.y || a.x - b.x);
+        const bdAddrClean = bdAddrItems.filter(it => !/^Address$/i.test(it.str.trim())).sort((a, b) => b.y - a.y || a.x - b.x);
+
+        const indLines = groupLines(indAddrClean);
+        const bdLines = groupLines(bdAddrClean);
+
+        if (indLines.length > 0) {
+            const fullIndAddr = indLines.join(' ');
+            const pinMatch = fullIndAddr.match(/\b(\d{6})\b/);
+            if (pinMatch) refs.add2ofsponsor_ind = pinMatch[1];
+
+            const stateRegex = /\b(ANDAMAN AND NICOBAR|ANDHRA PRADESH|ARUNACHAL PRADESH|ASSAM|BIHAR|CHANDIGARH|CHHATTISGARH|DADRA AND NAGAR HAVELI|DAMAN AND DIU|DELHI|GOA|GUJARAT|HARYANA|HIMACHAL PRADESH|JAMMU AND KASHMIR|JHARKHAND|KARNATAKA|KERALA|LADAKH|LAKSHADWEEP|MADHYA PRADESH|MAHARASHTRA|MANIPUR|MEGHALAYA|MIZORAM|NAGALAND|ODISHA|ORISSA|PUDUCHERRY|PUNJAB|RAJASTHAN|SIKKIM|TAMIL NADU|TELANGANA|TRIPURA|UTTAR PRADESH|UTTARAKHAND|WEST BENGAL)\b/i;
+            const stMatch = fullIndAddr.match(stateRegex);
+            if (stMatch) {
+                refs.stateofsponsor_ind = stMatch[1].toUpperCase();
+                const distMatch = fullIndAddr.slice(0, stMatch.index).trim().match(/([A-Z\s]+)$/i);
+                if (distMatch) {
+                    let dVal = distMatch[1].trim().split(/\s+/).slice(-2).join(' ').replace(/^\d{6}\s*/, '').trim().toUpperCase();
+                    if (dVal === "NEW" && refs.stateofsponsor_ind === "DELHI") {
+                        dVal = "NEW DELHI";
+                    }
+                    refs.districtofsponsor_ind = dVal;
+                }
+            }
+            if (/\bNEW\s+DELHI\b/i.test(fullIndAddr)) {
+                refs.stateofsponsor_ind = "DELHI";
+                refs.districtofsponsor_ind = "NEW DELHI";
+            }
+
+            // Only take lines strictly before the line containing the 6-digit pincode or state name
+            let footerLineIdx = indLines.findIndex(l => /\b\d{6}\b/.test(l) || stateRegex.test(l));
+            if (footerLineIdx === -1) footerLineIdx = indLines.length;
+
+            const streetLines = indLines.slice(0, footerLineIdx);
+            if (streetLines.length > 0) {
+                refs.add1ofsponsor_ind = streetLines
+                    .map(l => l.trim())
+                    .join(' ')
+                    .replace(/\s*,\s*/g, ', ')
+                    .replace(/,\s*,+/g, ', ')
+                    .replace(/[,\s]+$/, '')
+                    .slice(0, 50);
+            } else {
+                refs.add1ofsponsor_ind = fullIndAddr
+                    .replace(/\b\d{6}\b.*/, '')
+                    .replace(/\s*,\s*/g, ', ')
+                    .replace(/,\s*,+/g, ', ')
+                    .replace(/[,\s]+$/, '')
+                    .slice(0, 50);
+            }
+        }
+
+        // 3. PHONE NUMBER:
+        const indPhoneItems = pageItems.filter(it => Math.abs(it.y - rowPhone.y) <= 6 && it.x > (rowPhone.x + 10) && it.x < splitX);
+        if (indPhoneItems.length) {
+            const rawP = indPhoneItems.map(it => it.str).join(' ').replace(/[^\d+]/g, '');
+            if (rawP) refs.phoneofsponsor_ind = rawP;
+        }
+    }
+
+    return refs;
+}
+
+function parseInvitationLetter(text) {
+    // Standardize spaces
+    const cleanText = text.replace(/\s+/g, ' ');
+
+    // Extract Hospital Details
+    const hospitalNameMatch = cleanText.match(/Hospital Details.*?Name\s+(.*?)\s+Address/i);
+    const hospitalAddrMatch = cleanText.match(/Address\s+(.*?)\s+City\/District/i);
+    const hospitalCityMatch = cleanText.match(/City\/District\s+(.*?)\s+State/i);
+    const hospitalStateMatch = cleanText.match(/State\s+(.*?)\s+Phone/i);
+
+    const hospitalName = hospitalNameMatch ? hospitalNameMatch[1].trim() : '';
+    const hospitalAddr = hospitalAddrMatch ? hospitalAddrMatch[1].trim() : '';
+    const hospitalCity = hospitalCityMatch ? hospitalCityMatch[1].trim() : '';
+    const hospitalState = hospitalStateMatch ? hospitalStateMatch[1].trim() : '';
+
+    // Extract Treatment Details
+    const treatmentMatch = cleanText.match(/Diagnosis\/\s*Proposed\s*Treatment\s+(.*?)\s+(?:Name of Doctor|Department|Cost of Treatment)/i);
+    const natureOfTreatment = treatmentMatch ? treatmentMatch[1].trim() : 'MEDICAL TREATMENT';
+
+    // Extract Patient Section
+    const patientSecMatch = cleanText.match(/Details of (?:the\s+)?Patient([\s\S]*?)(?:Details of Treatment|Details of Attendant|$)/i);
+    let patient = { name: '', passport: '', dob: '', phone: '' };
+    if (patientSecMatch) {
+        const pText = patientSecMatch[1];
+        const surname = (pText.match(/Surname\s+(.+?)\s+(?:Given|Gender)/i) || ['', ''])[1].trim();
+        const givenName = (pText.match(/Given\s*name\s+(.+?)\s+(?:Gender|Date)/i) || ['', ''])[1].trim();
+        const dob = (pText.match(/Date of Birth\s+([\d/]+)/i) || ['', ''])[1].trim();
+        const passport = (pText.match(/Passport\s*No\.?\s*([A-Z0-9]+)/i) || ['', ''])[1].trim();
+        const phone = (pText.match(/Contact Number\s*\([Ii]n\s+Native\s+Country\)\s*(\d+)/i) || ['', ''])[1].trim();
+
+        patient = {
+            name: `${givenName} ${surname}`.trim().toUpperCase(),
+            dob: dob,
+            passport: passport.toUpperCase(),
+            phone: phone
+        };
+    }
+
+    // Extract Attendants
+    const attendants = [];
+    const attendantSecMatch = cleanText.match(/Details of Attendant([\s\S]*?)$/i);
+    if (attendantSecMatch) {
+        const aText = attendantSecMatch[1];
+        // Split by "Sr No. [number]"
+        const parts = aText.split(/Sr\s*No\.\s*\d+/i);
+        // The first part is usually empty or headers, skip it
+        for (let i = 1; i < parts.length; i++) {
+            const part = parts[i];
+            const surname = (part.match(/Surname\s+(.+?)\s+(?:Given|Gender)/i) || ['', ''])[1].trim();
+            const givenName = (part.match(/Given\s*Name\s+(.+?)\s+(?:Gender|Date)/i) || ['', ''])[1].trim();
+            const dob = (part.match(/Date of Birth\s+([\d/]+)/i) || ['', ''])[1].trim();
+            const passport = (part.match(/Passport\s*No\.?\s*([A-Z0-9]+)/i) || ['', ''])[1].trim();
+            const phone = (part.match(/Contact Number\s*\([Ii]n\s+Native\s+Country\)\s*(\d+)/i) || ['', ''])[1].trim();
+            const relationship = (part.match(/Relationship with the patient\s+(\w+)/i) || ['', ''])[1].trim();
+
+            if (passport) {
+                attendants.push({
+                    name: `${givenName} ${surname}`.trim().toUpperCase(),
+                    dob: dob,
+                    passport: passport.toUpperCase(),
+                    phone: phone,
+                    relationship: relationship.toUpperCase()
+                });
+            }
+        }
+    }
+
+    return {
+        hospital: {
+            name: hospitalName.toUpperCase(),
+            address: `${hospitalAddr}, ${hospitalCity}, ${hospitalState}`.replace(/,\s*,/g, ',').trim().toUpperCase(),
+            state: hospitalState.toUpperCase(),
+            city: hospitalCity.toUpperCase()
+        },
+        treatment: natureOfTreatment.toUpperCase(),
+        patient: patient,
+        attendants: attendants
+    };
+}
+
+function initSignatureCropper(canvasElement) {
+    sigCanvas = canvasElement;
+    sigCtx = sigCanvas.getContext('2d');
+
+    sigCanvas.onmousedown = (e) => {
+        if (!sigImg) return;
+        isDraggingSig = true;
+        const rect = sigCanvas.getBoundingClientRect();
+        startDragX = e.clientX - rect.left - sigX;
+        startDragY = e.clientY - rect.top - sigY;
+    };
+
+    sigCanvas.onmousemove = (e) => {
+        if (!isDraggingSig || !sigImg) return;
+        const rect = sigCanvas.getBoundingClientRect();
+        sigX = (e.clientX - rect.left) - startDragX;
+        sigY = (e.clientY - rect.top) - startDragY;
+        drawSignature();
+    };
+
+    sigCanvas.onmouseup = () => { isDraggingSig = false; };
+    sigCanvas.onmouseleave = () => { isDraggingSig = false; };
+}
+
+function loadSignatureImage(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            sigImg = img;
+            // Scale initially to fit height and center
+            sigZoom = sigCanvas.height / img.height;
+            sigX = (sigCanvas.width - img.width * sigZoom) / 2;
+            sigY = 0;
+            sigBrightness = 100;
+            sigContrast = 100;
+            drawSignature();
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function drawSignature() {
+    if (!sigCtx || !sigImg) return;
+
+    sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+    sigCtx.filter = `brightness(${sigBrightness}%) contrast(${sigContrast}%)`;
+
+    sigCtx.drawImage(
+        sigImg,
+        sigX,
+        sigY,
+        sigImg.width * sigZoom,
+        sigImg.height * sigZoom
+    );
+}
+
+function showUndertakingWizard() {
+    ensureModalCssLoaded();
+    if (document.getElementById('iv-undertaking-backdrop')) return;
+
+    let state = {
+        mode: 'pdf', // 'pdf' or 'manual'
+        hospitalName: '',
+        hospitalAddress: '',
+        treatment: '',
+        mission: 'DHAKA',
+        patient: { name: '', passport: '', dob: '', phone: '' },
+        attendants: [],
+        selectedProfileIndex: 0, // 0 = Patient, 1+ = Attendants
+        manualApplicantType: 'patient'
+    };
+
+    const backdrop = document.createElement('div');
+    backdrop.id = 'iv-undertaking-backdrop';
+
+    backdrop.innerHTML = `
+        <div id="iv-undertaking-modal">
+            <div class="iv-modal-header">
+                <h3>Medical Undertaking Generator</h3>
+                <button class="iv-modal-close" id="iv-btn-close-wizard">&times;</button>
+            </div>
+            <div class="iv-modal-body" id="iv-wizard-body">
+                <!-- Content injected dynamically -->
+            </div>
+            <div class="iv-modal-footer">
+                <button class="btn-neutral-wizard" id="iv-btn-prev-step" style="visibility: hidden;">Back</button>
+                <div style="display: flex; gap: 10px;" id="iv-normal-footer">
+                    <button class="btn-primary-wizard" id="iv-btn-next-step">Next</button>
+                </div>
+                <div style="display: none; gap: 10px;" id="iv-step3-footer">
+                    <button class="btn-secondary-wizard" id="iv-btn-download-medical-cover">Download Cover Letter (Free)</button>
+                    <button class="btn-gold-wizard" id="iv-btn-download-undertaking">Download Undertaking (Free)</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(backdrop);
+
+    document.getElementById('iv-btn-close-wizard').onclick = () => {
+        backdrop.remove();
+        cleanupSigEditor();
+    };
+
+    let currentStep = 1;
+
+    function renderStep() {
+        const body = document.getElementById('iv-wizard-body');
+        const prevBtn = document.getElementById('iv-btn-prev-step');
+        const nextBtn = document.getElementById('iv-btn-next-step');
+
+        prevBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+
+        const normalFooter = document.getElementById('iv-normal-footer');
+        const step3Footer = document.getElementById('iv-step3-footer');
+        if (currentStep === 3) {
+            if (normalFooter) normalFooter.style.display = 'none';
+            if (step3Footer) step3Footer.style.display = 'flex';
+        } else {
+            if (normalFooter) normalFooter.style.display = 'flex';
+            if (step3Footer) step3Footer.style.display = 'none';
+            if (nextBtn) nextBtn.innerText = 'Next';
+        }
+
+        if (currentStep === 1) {
+            body.innerHTML = `
+                <div class="iv-steps-indicator">
+                    <div class="iv-step-dot active">1</div>
+                    <div class="iv-step-dot">2</div>
+                    <div class="iv-step-dot">3</div>
+                </div>
+                <h4 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 700; color: #0f172a;">Step 1: Provide Medical Invitation Letter</h4>
+                
+                <div class="iv-upload-area" id="iv-pdf-drag-zone">
+                    <span class="iv-upload-icon"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></span>
+                    <span class="iv-upload-text">Upload Medical Invitation PDF</span>
+                    <span class="iv-upload-subtext">Drag & drop or click to browse</span>
+                    <input type="file" id="iv-pdf-input" accept="application/pdf" style="display: none;">
+                </div>
+                
+                <div style="text-align: center; margin: 20px 0;">
+                    <span style="font-size: 12px; color: #64748b; font-weight: 600; background: #ffffff; padding: 0 10px; position: relative; z-index: 2;">OR</span>
+                    <div style="height: 1px; background: #e2e8f0; margin-top: -10px;"></div>
+                </div>
+                
+                <button class="btn-secondary-wizard" id="iv-btn-manual-mode" style="width: 100%;">Write Manually</button>
+            `;
+
+            const zone = document.getElementById('iv-pdf-drag-zone');
+            const fileInput = document.getElementById('iv-pdf-input');
+
+            zone.onclick = () => fileInput.click();
+            zone.ondragover = (e) => { e.preventDefault(); zone.classList.add('dragover'); };
+            zone.ondragleave = () => zone.classList.remove('dragover');
+            zone.ondrop = (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    handleFileSelection(e.dataTransfer.files[0]);
+                }
+            };
+            fileInput.onchange = () => {
+                if (fileInput.files.length > 0) {
+                    handleFileSelection(fileInput.files[0]);
+                }
+            };
+
+            document.getElementById('iv-btn-manual-mode').onclick = () => {
+                state.mode = 'manual';
+                state.hospitalName = '';
+                state.hospitalAddress = '';
+                state.treatment = '';
+                state.patient = { name: '', passport: '', dob: '', phone: '' };
+                state.attendants = [{ name: '', passport: '', dob: '', phone: '', relationship: 'BROTHER' }];
+                state.selectedProfileIndex = 0;
+                currentStep = 2;
+                renderStep();
+            };
+        } else if (currentStep === 2) {
+            let profileCardsHtml = '';
+
+            if (state.mode === 'pdf') {
+                let idx = 0;
+                const profiles = [];
+                if (state.patient && state.patient.name) {
+                    profiles.push({ ...state.patient, role: 'Patient', index: 0 });
+                }
+                state.attendants.forEach((att, aIdx) => {
+                    profiles.push({ ...att, role: 'Attendant', index: aIdx + 1 });
+                });
+
+                profileCardsHtml = `
+                    <div class="iv-profiles-section-title">Select Applicant Profile (Signer):</div>
+                    <div class="iv-profiles-grid">
+                        ${profiles.map(p => `
+                            <div class="iv-profile-card ${state.selectedProfileIndex === p.index ? 'active' : ''}" data-idx="${p.index}">
+                                <div class="iv-profile-card-role">${p.role}</div>
+                                <div class="iv-profile-card-name">${p.name || 'Unnamed'}</div>
+                                <div class="iv-profile-card-ppt">${p.passport || 'No Passport'}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                profileCardsHtml = `
+                    <div class="iv-form-group full-width" style="margin-bottom: 16px;">
+                        <label>Applicant Role</label>
+                        <select id="iv-manual-role">
+                            <option value="patient" ${state.manualApplicantType === 'patient' ? 'selected' : ''}>Patient (Applying for Medical Visa)</option>
+                            <option value="attendant" ${state.manualApplicantType === 'attendant' ? 'selected' : ''}>Attendant (Applying for Medical Attendant Visa)</option>
+                        </select>
+                    </div>
+                `;
+            }
+
+            body.innerHTML = `
+                <div class="iv-steps-indicator">
+                    <div class="iv-step-dot completed">1</div>
+                    <div class="iv-step-dot active">2</div>
+                    <div class="iv-step-dot">3</div>
+                </div>
+                <h4 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 700; color: #0f172a;">Step 2: Verify & Complete Information</h4>
+                
+                <div class="iv-form-grid">
+                    <div class="iv-form-group full-width">
+                        <label>Hospital Name*</label>
+                        <input type="text" id="iv-input-hosp-name" value="${escapeHtml(state.hospitalName)}">
+                    </div>
+                    <div class="iv-form-group full-width">
+                        <label>Hospital Address*</label>
+                        <input type="text" id="iv-input-hosp-addr" value="${escapeHtml(state.hospitalAddress)}">
+                    </div>
+                    <div class="iv-form-group">
+                        <label>Nature of Treatment*</label>
+                        <input type="text" id="iv-input-treatment" value="${escapeHtml(state.treatment)}" placeholder="e.g. ORTHO CARE">
+                    </div>
+                    <div class="iv-form-group">
+                        <label>Indian Mission / Office*</label>
+                        <select id="iv-input-mission">
+                            <option value="DHAKA" ${state.mission === 'DHAKA' ? 'selected' : ''}>DHAKA</option>
+                            <option value="CHITTAGONG" ${state.mission === 'CHITTAGONG' ? 'selected' : ''}>CHITTAGONG</option>
+                            <option value="RAJSHAHI" ${state.mission === 'RAJSHAHI' ? 'selected' : ''}>RAJSHAHI</option>
+                            <option value="SYLHET" ${state.mission === 'SYLHET' ? 'selected' : ''}>SYLHET</option>
+                            <option value="KHULNA" ${state.mission === 'KHULNA' ? 'selected' : ''}>KHULNA</option>
+                        </select>
+                    </div>
+                </div>
+
+                ${profileCardsHtml}
+
+                <div id="iv-dynamic-profile-details"></div>
+            `;
+
+            updateDetailsForm();
+
+            // Bind add/remove attendant buttons if Patient is selected
+            if (state.selectedProfileIndex === 0) {
+                const addBtn = document.getElementById('iv-btn-add-attendant');
+                if (addBtn) {
+                    addBtn.onclick = () => {
+                        saveCurrentStep2Inputs();
+                        state.attendants.push({ name: '', passport: '', dob: '', phone: '', relationship: 'BROTHER' });
+                        renderStep();
+                    };
+                }
+
+                document.querySelectorAll('.iv-remove-attendant').forEach(btn => {
+                    btn.onclick = () => {
+                        saveCurrentStep2Inputs();
+                        const idx = parseInt(btn.dataset.idx);
+                        state.attendants.splice(idx, 1);
+                        renderStep();
+                    };
+                });
+            }
+
+            if (state.mode === 'pdf') {
+                document.querySelectorAll('.iv-profile-card').forEach(card => {
+                    card.onclick = () => {
+                        saveCurrentStep2Inputs();
+                        state.selectedProfileIndex = parseInt(card.dataset.idx);
+                        renderStep();
+                    };
+                });
+            } else {
+                document.getElementById('iv-manual-role').onchange = (e) => {
+                    saveCurrentStep2Inputs();
+                    state.manualApplicantType = e.target.value;
+                    state.selectedProfileIndex = state.manualApplicantType === 'patient' ? 0 : 1;
+                    renderStep();
+                };
+            }
+        } else if (currentStep === 3) {
+            body.innerHTML = `
+                <div class="iv-steps-indicator">
+                    <div class="iv-step-dot completed">1</div>
+                    <div class="iv-step-dot completed">2</div>
+                    <div class="iv-step-dot active">3</div>
+                </div>
+                <h4 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 700; color: #0f172a;">Step 3: Signature (Optional)</h4>
+                
+                <div class="iv-form-group full-width" style="margin-bottom: 16px;">
+                    <label>Upload Signature Image</label>
+                    <input type="file" id="iv-sig-file-input" accept="image/*">
+                </div>
+
+                <div class="iv-sig-workspace" id="iv-sig-workspace-area" style="display: none;">
+                    <div class="iv-canvas-container">
+                        <canvas id="iv-sig-canvas" width="300" height="100"></canvas>
+                        <div class="iv-canvas-crop-overlay"></div>
+                    </div>
+                    <p style="font-size: 11px; color: #64748b; margin: 8px 0 0 0;">Drag image to align. Zoom signature to adjust framing.</p>
+                    
+                    <div class="iv-sig-slider-group">
+                        <div class="iv-slider-row">
+                            <label>Zoom</label>
+                            <input type="range" id="iv-sig-zoom" min="0.1" max="3" step="0.02" value="1">
+                        </div>
+                        <div class="iv-slider-row">
+                            <label>Brightness</label>
+                            <input type="range" id="iv-sig-brightness" min="50" max="200" step="1" value="100">
+                        </div>
+                        <div class="iv-slider-row">
+                            <label>Contrast</label>
+                            <input type="range" id="iv-sig-contrast" min="50" max="250" step="1" value="100">
+                        </div>
+                    </div>
+                </div>
+                
+                <p id="iv-sig-empty-note" style="font-size: 13px; color: #64748b; text-align: center; margin: 30px 0;">No signature uploaded. The downloaded PDF will have a blank space for physical signing.</p>
+            `;
+
+            const canvas = document.getElementById('iv-sig-canvas');
+            const fileInput = document.getElementById('iv-sig-file-input');
+            const workspace = document.getElementById('iv-sig-workspace-area');
+            const emptyNote = document.getElementById('iv-sig-empty-note');
+
+            initSignatureCropper(canvas);
+
+            fileInput.onchange = () => {
+                if (fileInput.files.length > 0) {
+                    workspace.style.display = 'flex';
+                    emptyNote.style.display = 'none';
+                    loadSignatureImage(fileInput.files[0]);
+                }
+            };
+
+            const zoomSlider = document.getElementById('iv-sig-zoom');
+            const brightSlider = document.getElementById('iv-sig-brightness');
+            const contSlider = document.getElementById('iv-sig-contrast');
+
+            if (zoomSlider) {
+                zoomSlider.oninput = (e) => {
+                    sigZoom = parseFloat(e.target.value);
+                    drawSignature();
+                };
+            }
+            if (brightSlider) {
+                brightSlider.oninput = (e) => {
+                    sigBrightness = parseInt(e.target.value);
+                    drawSignature();
+                };
+            }
+            if (contSlider) {
+                contSlider.oninput = (e) => {
+                    sigContrast = parseInt(e.target.value);
+                    drawSignature();
+                };
+            }
+
+            if (sigImg) {
+                workspace.style.display = 'flex';
+                emptyNote.style.display = 'none';
+                zoomSlider.value = sigZoom;
+                brightSlider.value = sigBrightness;
+                contSlider.value = sigContrast;
+                drawSignature();
+            }
+        }
+    }
+
+    function updateDetailsForm() {
+        const detailsContainer = document.getElementById('iv-dynamic-profile-details');
+        if (!detailsContainer) return;
+
+        const isAttendant = state.selectedProfileIndex > 0;
+
+        let detailsHtml = '';
+        if (isAttendant) {
+            const att = state.attendants[state.selectedProfileIndex - 1] || { name: '', passport: '', dob: '', phone: '', relationship: 'BROTHER' };
+            const pat = state.patient || { name: '', passport: '' };
+
+            detailsHtml = `
+                <div class="iv-profiles-section-title">Signer Details (Attendant):</div>
+                <div class="iv-form-grid">
+                    <div class="iv-form-group">
+                        <label>Attendant Name*</label>
+                        <input type="text" id="iv-input-att-name" value="${escapeHtml(att.name)}">
+                    </div>
+                    <div class="iv-form-group">
+                        <label>Passport Number*</label>
+                        <input type="text" id="iv-input-att-passport" value="${escapeHtml(att.passport)}">
+                    </div>
+                    <div class="iv-form-group">
+                        <label>Date of Birth*</label>
+                        <input type="text" id="iv-input-att-dob" value="${escapeHtml(att.dob)}" placeholder="e.g. DD/MM/YYYY">
+                    </div>
+                    <div class="iv-form-group">
+                        <label>Contact Number*</label>
+                        <input type="text" id="iv-input-att-phone" value="${escapeHtml(att.phone)}">
+                    </div>
+                    <div class="iv-form-group">
+                        <label>Relationship with Patient*</label>
+                        <input type="text" id="iv-input-relationship" value="${escapeHtml(att.relationship || 'BROTHER')}">
+                    </div>
+                </div>
+
+                <div class="iv-profiles-section-title">Accompanying Patient Details:</div>
+                <div class="iv-form-grid">
+                    <div class="iv-form-group">
+                        <label>Patient Name*</label>
+                        <input type="text" id="iv-input-pat-name" value="${escapeHtml(pat.name)}">
+                    </div>
+                    <div class="iv-form-group">
+                        <label>Patient Passport*</label>
+                        <input type="text" id="iv-input-pat-passport" value="${escapeHtml(pat.passport)}">
+                    </div>
+                </div>
+            `;
+        } else {
+            const pat = state.patient || { name: '', passport: '', dob: '', phone: '' };
+
+            let attendantsHtml = '';
+            if (state.attendants.length > 0) {
+                state.attendants.forEach((att, aIdx) => {
+                    attendantsHtml += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; margin-bottom: 8px;">
+                            <span class="iv-profiles-section-title" style="margin: 0; font-size: 12px; font-weight: 700; color: #475569;">Accompanying Attendant ${aIdx + 1} Details:</span>
+                            ${state.attendants.length > 1 ? `<span class="iv-remove-attendant" data-idx="${aIdx}" style="font-size: 11px; color: #ef4444; cursor: pointer; font-weight: 600;">[Remove]</span>` : ''}
+                        </div>
+                        <div class="iv-form-grid">
+                            <div class="iv-form-group">
+                                <label>Attendant Name*</label>
+                                <input type="text" id="iv-input-att-name-${aIdx}" value="${escapeHtml(att.name)}">
+                            </div>
+                            <div class="iv-form-group">
+                                <label>Attendant Passport*</label>
+                                <input type="text" id="iv-input-att-passport-${aIdx}" value="${escapeHtml(att.passport)}">
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                attendantsHtml = `
+                    <div class="iv-profiles-section-title" style="margin-top: 15px;">Accompanying Attendant Details:</div>
+                    <div class="iv-form-grid">
+                        <div class="iv-form-group">
+                            <label>Attendant Name*</label>
+                            <input type="text" id="iv-input-att-name-0" value="">
+                        </div>
+                        <div class="iv-form-group">
+                            <label>Attendant Passport*</label>
+                            <input type="text" id="iv-input-att-passport-0" value="">
+                        </div>
+                    </div>
+                `;
+            }
+
+            detailsHtml = `
+                <div class="iv-profiles-section-title">Signer Details (Patient):</div>
+                <div class="iv-form-grid">
+                    <div class="iv-form-group">
+                        <label>Patient Name*</label>
+                        <input type="text" id="iv-input-pat-name" value="${escapeHtml(pat.name)}">
+                    </div>
+                    <div class="iv-form-group">
+                        <label>Passport Number*</label>
+                        <input type="text" id="iv-input-pat-passport" value="${escapeHtml(pat.passport)}">
+                    </div>
+                    <div class="iv-form-group">
+                        <label>Date of Birth*</label>
+                        <input type="text" id="iv-input-pat-dob" value="${escapeHtml(pat.dob)}" placeholder="e.g. DD/MM/YYYY">
+                    </div>
+                    <div class="iv-form-group">
+                        <label>Contact Number*</label>
+                        <input type="text" id="iv-input-pat-phone" value="${escapeHtml(pat.phone)}">
+                    </div>
+                </div>
+
+                ${attendantsHtml}
+
+                <div style="text-align: right; margin-top: 12px; margin-bottom: 8px;">
+                    <button type="button" id="iv-btn-add-attendant" class="btn-secondary-wizard" style="font-size: 11px; padding: 4px 8px; width: auto; display: inline-block; cursor: pointer; font-weight: bold; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 4px;">+ Add Attendant</button>
+                </div>
+            `;
+        }
+
+        detailsContainer.innerHTML = detailsHtml;
+    }
+
+    function saveCurrentStep2Inputs() {
+        const getVal = (id) => {
+            const el = document.getElementById(id);
+            return el ? el.value.trim().toUpperCase() : '';
+        };
+
+        state.hospitalName = getVal('iv-input-hosp-name');
+        state.hospitalAddress = getVal('iv-input-hosp-addr');
+        state.treatment = getVal('iv-input-treatment');
+
+        const missionEl = document.getElementById('iv-input-mission');
+        if (missionEl) state.mission = missionEl.value;
+
+        const isAttendant = state.selectedProfileIndex > 0;
+        if (isAttendant) {
+            const idx = state.selectedProfileIndex - 1;
+            if (!state.attendants[idx]) state.attendants[idx] = {};
+            state.attendants[idx].name = getVal('iv-input-att-name');
+            state.attendants[idx].passport = getVal('iv-input-att-passport');
+            state.attendants[idx].dob = getVal('iv-input-att-dob');
+            state.attendants[idx].phone = getVal('iv-input-att-phone');
+            state.attendants[idx].relationship = getVal('iv-input-relationship');
+
+            if (!state.patient) state.patient = {};
+            state.patient.name = getVal('iv-input-pat-name');
+            state.patient.passport = getVal('iv-input-pat-passport');
+        } else {
+            if (!state.patient) state.patient = {};
+            state.patient.name = getVal('iv-input-pat-name');
+            state.patient.passport = getVal('iv-input-pat-passport');
+            state.patient.dob = getVal('iv-input-pat-dob');
+            state.patient.phone = getVal('iv-input-pat-phone');
+
+            const attCount = Math.max(state.attendants.length, 1);
+            for (let i = 0; i < attCount; i++) {
+                if (!state.attendants[i]) state.attendants[i] = {};
+                state.attendants[i].name = getVal(`iv-input-att-name-${i}`);
+                state.attendants[i].passport = getVal(`iv-input-att-passport-${i}`);
+            }
+        }
+    }
+
+    async function handleFileSelection(file) {
+        if (!file || file.type !== "application/pdf") {
+            alert("Please upload a valid PDF file.");
+            return;
+        }
+
+        const progressDiv = document.createElement('div');
+        progressDiv.style.margin = '20px 0';
+        progressDiv.style.textAlign = 'center';
+        progressDiv.style.fontSize = '13px';
+        progressDiv.style.color = '#4f46e5';
+        progressDiv.style.fontWeight = '700';
+        progressDiv.innerText = "Parsing Invitation PDF...";
+
+        const zone = document.getElementById('iv-pdf-drag-zone');
+        zone.parentNode.insertBefore(progressDiv, zone.nextSibling);
+        zone.style.opacity = '0.5';
+
+        try {
+            const extractedText = await parsePdfClientSide(file);
+            const parsed = parseInvitationLetter(extractedText);
+
+            state.hospitalName = parsed.hospital.name;
+            state.hospitalAddress = parsed.hospital.address;
+            state.treatment = parsed.treatment;
+            state.patient = parsed.patient;
+            state.attendants = parsed.attendants;
+            state.mode = 'pdf';
+            state.selectedProfileIndex = 0; // Default Patient selected
+
+            progressDiv.remove();
+            currentStep = 2;
+            renderStep();
+        } catch (err) {
+            console.error(err);
+            progressDiv.innerText = "Error parsing PDF! Switching to manual mode...";
+            progressDiv.style.color = '#ef4444';
+            setTimeout(() => {
+                progressDiv.remove();
+                state.mode = 'manual';
+                state.attendants = [{ name: '', passport: '', dob: '', phone: '', relationship: 'BROTHER' }];
+                currentStep = 2;
+                renderStep();
+            }, 2000);
+        }
+    }
+
+    function cleanupSigEditor() {
+        sigImg = null;
+        if (sigCanvas) {
+            sigCanvas.onmousedown = null;
+            sigCanvas.onmousemove = null;
+            sigCanvas.onmouseup = null;
+            sigCanvas.onmouseleave = null;
+            sigCanvas = null;
+            sigCtx = null;
+        }
+    }
+
+    document.getElementById('iv-btn-next-step').onclick = () => {
+        if (currentStep === 1) {
+            alert("Please select a file or click Write Manually.");
+        } else if (currentStep === 2) {
+            saveCurrentStep2Inputs();
+
+            const fieldsToValidate = [
+                { id: 'iv-input-hosp-name', name: 'Hospital Name', value: state.hospitalName },
+                { id: 'iv-input-hosp-addr', name: 'Hospital Address', value: state.hospitalAddress },
+                { id: 'iv-input-treatment', name: 'Proposed Treatment', value: state.treatment }
+            ];
+
+            let missingFields = [];
+            fieldsToValidate.forEach(field => {
+                const el = document.getElementById(field.id);
+                if (!field.value) {
+                    missingFields.push(field.name);
+                    if (el) {
+                        el.style.borderColor = '#ef4444';
+                        el.style.backgroundColor = '#fef2f2';
+                        el.oninput = () => {
+                            if (el.value.trim()) {
+                                el.style.borderColor = '';
+                                el.style.backgroundColor = '';
+                            }
+                        };
+                    }
+                } else {
+                    if (el) {
+                        el.style.borderColor = '';
+                        el.style.backgroundColor = '';
+                    }
+                }
+            });
+
+            if (missingFields.length > 0) {
+                alert("Please fill in: " + missingFields.join(', '));
+                return;
+            }
+
+            currentStep = 3;
+            renderStep();
+        }
+    };
+
+    document.getElementById('iv-btn-prev-step').onclick = () => {
+        if (currentStep > 1) {
+            if (currentStep === 2) {
+                saveCurrentStep2Inputs();
+            }
+            currentStep--;
+            renderStep();
+        }
+    };
+
+    document.getElementById('iv-btn-download-medical-cover').onclick = async () => {
+        const success = await deductCredits('cover_letter', 1);
+        if (success) {
+            triggerMedicalCoverLetterDownload();
+        }
+    };
+
+    document.getElementById('iv-btn-download-undertaking').onclick = async () => {
+        const success = await deductCredits('undertaking', 1);
+        if (success) {
+            triggerDirectDownload();
+        }
+    };
+
+    function triggerDirectDownload() {
+        let signatureDataUrl = null;
+        if (sigImg && sigCanvas) {
+            signatureDataUrl = sigCanvas.toDataURL('image/png');
+        }
+
+        const isAttendant = state.selectedProfileIndex > 0;
+        const signerName = isAttendant
+            ? (state.attendants[state.selectedProfileIndex - 1]?.name || '')
+            : (state.patient?.name || '');
+        const signerPassport = isAttendant
+            ? (state.attendants[state.selectedProfileIndex - 1]?.passport || '')
+            : (state.patient?.passport || '');
+        const signerPhone = isAttendant
+            ? (state.attendants[state.selectedProfileIndex - 1]?.phone || '')
+            : (state.patient?.phone || '');
+
+        const patientName = state.patient?.name || '';
+        const patientPassport = state.patient?.passport || '';
+
+        const openingParagraph = isAttendant
+            ? `I, <b>${signerName}</b>, holder of Bangladesh Passport No. <b>${signerPassport}</b>, am applying for a Medical Attendant Visa to accompany my patient <b>${patientName}</b>, holder of Bangladesh Passport No. <b>${patientPassport}</b>, who is travelling to India for medical treatment at <b>${state.hospitalName}</b>, located at <b>${state.hospitalAddress}</b>.`
+            : `I, <b>${signerName}</b>, holder of Bangladesh Passport No. <b>${signerPassport}</b>, am applying for a Medical Visa to travel to India for treatment at <b>${state.hospitalName}</b>, located at <b>${state.hospitalAddress}</b>.`;
+
+        let clause2 = '';
+        let attendantSectionHtml = '';
+
+        if (isAttendant) {
+            clause2 = `I, <b>${signerName}</b>, will accompany the patient only for the purpose of providing necessary assistance during the medical treatment.`;
+            attendantSectionHtml = `
+                <p style="margin: 0 0 8px 0; color: #000000 !important; display: block !important;">Details of the patient I will be accompanying:</p>
+                <p style="margin: 0 0 4px 0; font-weight: bold; color: #000000 !important; display: block !important;">Name: ${patientName}</p>
+                <p style="margin: 0 0 16px 0; font-weight: bold; color: #000000 !important; display: block !important;">Passport Number: ${patientPassport}</p>
+            `;
+        } else {
+            const validAttendants = state.attendants.filter(a => (a.name && a.name.trim()) || (a.passport && a.passport.trim()));
+            if (validAttendants.length > 1) {
+                const names = validAttendants.map(a => `<b>${a.name}</b>`).join(' and ');
+                clause2 = `My attendants, ${names}, will accompany me only for the purpose of providing necessary assistance during my medical treatment.`;
+
+                attendantSectionHtml = `
+                    <p style="margin: 0 0 8px 0; color: #000000 !important; display: block !important;">I would also like to request the issuance of a Medical Attendant Visa for my attendants:</p>
+                    ${validAttendants.map((a, i) => `
+                        <div style="margin-bottom: 6px; display: block !important;">
+                            <p style="margin: 0 0 2px 0; font-weight: bold; color: #000000 !important; display: block !important;">Attendant ${i + 1} Name: ${a.name}</p>
+                            <p style="margin: 0 0 0 0; font-weight: bold; color: #000000 !important; display: block !important;">Passport Number: ${a.passport}</p>
+                        </div>
+                    `).join('')}
+                `;
+            } else {
+                const att = validAttendants[0] || { name: '', passport: '' };
+                clause2 = `My attendant, <b>${att.name}</b>, will accompany me only for the purpose of providing necessary assistance during my medical treatment.`;
+
+                attendantSectionHtml = `
+                    <p style="margin: 0 0 8px 0; color: #000000 !important; display: block !important;">I would also like to request the issuance of a Medical Attendant Visa for my attendant:</p>
+                    <p style="margin: 0 0 4px 0; font-weight: bold; color: #000000 !important; display: block !important;">Name: ${att.name}</p>
+                    <p style="margin: 0 0 16px 0; font-weight: bold; color: #000000 !important; display: block !important;">Passport Number: ${att.passport}</p>
+                `;
+            }
+        }
+
+        const filename = `${signerName.trim().replace(/[<>:"/\\|?*]/g, '')} - Medical Undertaking.pdf`;
+
+        const signatureHtml = signatureDataUrl
+            ? `<div style="margin-bottom: 5px;"><img src="${signatureDataUrl}" style="height: 48px; object-fit: contain; max-width: 200px;"></div>`
+            : `<div style="height: 48px; margin-bottom: 5px;"></div>`;
+
+        const container = document.createElement('div');
+        container.style.position = 'relative';
+        container.style.width = '170mm';
+        container.style.background = '#ffffff';
+        container.style.color = '#000000';
+        container.style.display = 'block';
+
+        container.innerHTML = `
+            <div style="font-family: Arial, sans-serif; font-size: 14.5px; line-height: 1.45; color: #000000 !important; padding: 0; background: #ffffff !important; text-align: left; display: block !important; visibility: visible !important; opacity: 1 !important;">
+                <p style="margin: 0 0 5px 0; color: #000000 !important; display: block !important;">To</p>
+                <p style="margin: 0 0 5px 0; color: #000000 !important; display: block !important;">The Visa Officer</p>
+                <p style="margin: 0 0 5px 0; color: #000000 !important; display: block !important;">High Commission of India</p>
+                <p style="margin: 0 0 20px 0; color: #000000 !important; display: block !important;">${state.mission.toUpperCase()}, Bangladesh</p>
+
+                <p style="margin: 0 0 20px 0; font-weight: bold; text-decoration: underline; color: #000000 !important; display: block !important;">
+                    Subject: Undertaking for ${isAttendant ? 'Medical Attendant' : 'Medical'} Visa Application.
+                </p>
+
+                <p style="margin: 0 0 16px 0; text-align: justify; color: #000000 !important; display: block !important;">
+                    ${openingParagraph}
+                </p>
+
+                ${attendantSectionHtml}
+
+                <p style="margin: 0 0 8px 0; color: #000000 !important; display: block !important;">I undertake that:</p>
+                <ol style="margin: 0 0 16px 0; padding-left: 20px; text-align: justify; color: #000000 !important; display: block !important;">
+                    <li style="margin-bottom: 6px; color: #000000 !important;">All information provided in the visa application and supporting documents is true and correct to the best of my knowledge.</li>
+                    <li style="margin-bottom: 6px; color: #000000 !important;">${clause2}</li>
+                    <li style="margin-bottom: 6px; color: #000000 !important;">We shall abide by all laws, rules, and regulations of India during our stay.</li>
+                    <li style="margin-bottom: 6px; color: #000000 !important;">We shall not engage in any activity other than those permitted under the respective visa categories.</li>
+                    <li style="margin-bottom: 6px; color: #000000 !important;">We shall bear all expenses related to travel, accommodation, medical treatment, and other associated costs during our stay in India.</li>
+                    <li style="margin-bottom: 6px; color: #000000 !important;">We shall leave India upon completion of the medical treatment and within the validity period of the visa${!isAttendant ? 's' : ''} granted.</li>
+                </ol>
+
+                <p style="margin: 0 0 16px 0; text-align: justify; color: #000000 !important; display: block !important;">
+                    I respectfully request the High Commission of India to kindly consider ${isAttendant ? 'this application' : 'our visa applications'} and grant the necessary ${isAttendant ? 'Medical Attendant Visa' : 'Medical Visa and Medical Attendant Visa'}.
+                </p>
+
+                <p style="margin: 0 0 20px 0; color: #000000 !important; display: block !important;">Thank you for your kind consideration.</p>
+
+                <p style="margin: 0 0 16px 0; color: #000000 !important; display: block !important;">Yours faithfully,</p>
+
+                <div style="margin-top: 20px; font-size: 14.5px; color: #000000 !important; display: block !important;">
+                    ${signatureHtml}
+                    <div style="width: 250px; border-top: 1px solid #000; margin-bottom: 10px;"></div>
+                    <p style="margin: 0 0 4px 0; font-weight: bold; color: #000000 !important;">${signerName}</p>
+                    <p style="margin: 0 0 4px 0; color: #000000 !important;">Passport No: ${signerPassport}</p>
+                    <p style="margin: 0 0 4px 0; color: #000000 !important;">Date: ${getFormattedDate()}</p>
+                    <p style="margin: 0 0 0 0; color: #000000 !important;">Contact Number: ${signerPhone}</p>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(container);
+
+        const opt = {
+            margin: [15, 15, 15, 15],
+            filename: filename,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                scrollX: 0,
+                scrollY: 0
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Trigger PDF save directly
+        html2pdf().from(container).set(opt).save().then(() => {
+            container.remove();
+            currentStep = 2;
+            renderStep();
+        });
+    }
+
+    function triggerMedicalCoverLetterDownload() {
+        let signatureDataUrl = null;
+        if (sigImg && sigCanvas) {
+            signatureDataUrl = sigCanvas.toDataURL('image/png');
+        }
+
+        const isAttendant = state.selectedProfileIndex > 0;
+        const signerName = isAttendant
+            ? (state.attendants[state.selectedProfileIndex - 1]?.name || '')
+            : (state.patient?.name || '');
+        const signerPassport = isAttendant
+            ? (state.attendants[state.selectedProfileIndex - 1]?.passport || '')
+            : (state.patient?.passport || '');
+        const signerPhone = isAttendant
+            ? (state.attendants[state.selectedProfileIndex - 1]?.phone || '')
+            : (state.patient?.phone || '');
+
+        const patientName = state.patient?.name || '';
+        const patientPassport = state.patient?.passport || '';
+
+        const validAttendants = state.attendants.filter(a => (a.name && a.name.trim()) || (a.passport && a.passport.trim()));
+
+        let coverLetterSubject = isAttendant
+            ? "Application for Indian Medical Attendant Visa"
+            : "Application for Indian Medical Visa";
+
+        let bodyHtml = "";
+
+        if (isAttendant) {
+            bodyHtml = `
+                <p style="margin: 0 0 16px 0; text-align: justify; color: #000000 !important; display: block !important;">
+                    My name is <b>${signerName}</b>, holder of Bangladesh Passport No. <b>${signerPassport}</b>. I am applying for a Medical Attendant Visa to accompany my patient, <b>${patientName}</b> (holder of Passport No. <b>${patientPassport}</b>), who is traveling to India for necessary medical treatment.
+                </p>
+                <p style="margin: 0 0 16px 0; text-align: justify; color: #000000 !important; display: block !important;">
+                    The patient is scheduled to receive treatment for <b>${state.treatment}</b> at <b>${state.hospitalName}</b>, located at <b>${state.hospitalAddress}</b>. As the designated medical attendant, my presence is vital to provide necessary physical and emotional support to the patient during their journey and medical stay in India.
+                </p>
+                <p style="margin: 0 0 16px 0; text-align: justify; color: #000000 !important; display: block !important;">
+                    I assure you that we will respect and comply with all visa conditions, regulations, and immigration laws of India. Neither the patient nor I have any intention of overstaying our visas, and we will return to Bangladesh immediately upon completion of the medical treatment and within the validity period of the visa granted.
+                </p>
+                <p style="margin: 0 0 20px 0; text-align: justify; color: #000000 !important; display: block !important;">
+                    I kindly request you to consider my application favorably and grant me a Medical Attendant Visa so that I may accompany and assist the patient during their treatment.
+                </p>
+            `;
+        } else {
+            let attendantDetailClause = "";
+            let overstayGuaranteeClause = "";
+            if (validAttendants.length > 0) {
+                const names = validAttendants.map(a => `<b>${a.name}</b> (Passport No. <b>${a.passport}</b>)`).join(' and ');
+                attendantDetailClause = `I will be accompanied by my medical attendant(s), namely ${names}, who will assist me during my travel and stay in India.`;
+                overstayGuaranteeClause = "I assure you that neither my attendants nor I will overstay in India. We will comply with all visa regulations and return to Bangladesh immediately upon the completion of my treatment.";
+            } else {
+                attendantDetailClause = "I am traveling to India independently for this treatment.";
+                overstayGuaranteeClause = "I assure you that I will comply with all visa regulations, will not overstay in India, and will return to Bangladesh immediately upon the completion of my treatment.";
+            }
+
+            bodyHtml = `
+                <p style="margin: 0 0 16px 0; text-align: justify; color: #000000 !important; display: block !important;">
+                    My name is <b>${signerName}</b>, holder of Bangladesh Passport No. <b>${signerPassport}</b>. I respectfully submit my application for an Indian Medical Visa to receive treatment for <b>${state.treatment}</b> at <b>${state.hospitalName}</b>, located at <b>${state.hospitalAddress}</b>.
+                </p>
+                <p style="margin: 0 0 16px 0; text-align: justify; color: #000000 !important; display: block !important;">
+                    ${attendantDetailClause} The medical invitation and appointment letter from the hospital have been attached herewith for your kind perusal.
+                </p>
+                <p style="margin: 0 0 16px 0; text-align: justify; color: #000000 !important; display: block !important;">
+                    ${overstayGuaranteeClause} All expenses related to my travel, accommodation, and medical procedures will be fully borne by me.
+                </p>
+                <p style="margin: 0 0 20px 0; text-align: justify; color: #000000 !important; display: block !important;">
+                    I kindly request you to favorably consider my application and grant me the necessary Medical Visa, along with visa(s) for my accompanying attendant(s), so that I may undergo this essential treatment.
+                </p>
+            `;
+        }
+
+        const filename = `${signerName.trim().replace(/[<>:"/\\|?*]/g, '')} - Medical Cover Letter.pdf`;
+
+        const container = document.createElement('div');
+        container.style.position = 'relative';
+        container.style.width = '170mm';
+        container.style.background = '#ffffff';
+        container.style.color = '#000000';
+        container.style.display = 'block';
+
+        const signatureHtml = signatureDataUrl
+            ? `<div style="margin-bottom: 5px;"><img src="${signatureDataUrl}" style="height: 48px; object-fit: contain; max-width: 200px;"></div>`
+            : `<div style="height: 48px; margin-bottom: 5px;"></div>`;
+
+        container.innerHTML = `
+            <div style="font-family: Arial, sans-serif; font-size: 14.5px; line-height: 1.45; color: #000000 !important; padding: 0; background: #ffffff !important; text-align: left; display: block !important; visibility: visible !important; opacity: 1 !important;">
+                <p style="margin: 0 0 5px 0; color: #000000 !important; display: block !important;">To</p>
+                <p style="margin: 0 0 5px 0; color: #000000 !important; display: block !important;">The Visa Officer</p>
+                <p style="margin: 0 0 5px 0; color: #000000 !important; display: block !important;">High Commission of India</p>
+                <p style="margin: 0 0 25px 0; color: #000000 !important; display: block !important;">${state.mission.toUpperCase()}, Bangladesh</p>
+
+                <p style="margin: 0 0 25px 0; font-weight: bold; text-decoration: underline; color: #000000 !important; display: block !important;">
+                    Subject: ${coverLetterSubject}.
+                </p>
+
+                <p style="margin: 0 0 20px 0; color: #000000 !important; display: block !important;">Dear Sir/Madam,</p>
+
+                ${bodyHtml}
+
+                <p style="margin: 0 0 16px 0; color: #000000 !important; display: block !important;">Thank you very much for your time and kind consideration. I look forward to your positive response.</p>
+
+                <p style="margin: 0 0 25px 0; color: #000000 !important; display: block !important;">Yours faithfully,</p>
+
+                <div style="margin-top: 25px; font-size: 14.5px; color: #000000 !important; display: block !important;">
+                    ${signatureHtml}
+                    <div style="width: 250px; border-top: 1px solid #000; margin-bottom: 10px;"></div>
+                    <p style="margin: 0 0 4px 0; font-weight: bold; color: #000000 !important;">${signerName}</p>
+                    <p style="margin: 0 0 4px 0; color: #000000 !important;">Passport No: ${signerPassport}</p>
+                    <p style="margin: 0 0 0 0; color: #000000 !important;">Mobile: ${signerPhone}</p>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(container);
+
+        const opt = {
+            margin: [15, 15, 15, 15],
+            filename: filename,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                scrollX: 0,
+                scrollY: 0
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().from(container).set(opt).save().then(() => {
+            container.remove();
+        });
+    }
+
+    renderStep();
+}
+
 // =========================================================================
 // === 8B. DISTRICT EXTRACTOR & UNDERTAKING MODALS (VISA & CHOICE) ===
 // =========================================================================
@@ -1595,6 +2793,7 @@ function ensureAddressHasDistrict(address, district) {
 }
 
 function showUndertakingChoiceModal() {
+    ensureModalCssLoaded();
     if (document.getElementById('iv-undertaking-choice-backdrop')) return;
 
     const backdrop = document.createElement('div');
@@ -1793,6 +2992,7 @@ function createSignatureCropper(canvasElement, { zoomInput, brightnessInput, con
  * Overlays text directly over the 100% authentic government form template!
  */
 function showVisaUndertakingWizard() {
+    ensureModalCssLoaded();
     if (document.getElementById('iv-visa-undertaking-backdrop')) return;
 
     let state = {
@@ -2709,6 +3909,7 @@ function showVisaUndertakingWizard() {
  * =========================================================================
  */
 function showConsentLetterWizard() {
+    ensureModalCssLoaded();
     if (document.getElementById('iv-consent-backdrop')) return;
 
     let state = {
